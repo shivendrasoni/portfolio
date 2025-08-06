@@ -1,9 +1,8 @@
-import React from 'react';
 import { Badge } from './components/ui/badge';
 import { Button } from './components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './components/ui/card';
 import { Separator } from './components/ui/separator';
-import { Github, Linkedin, Mail, ExternalLink, MapPin, Calendar, Award, Briefcase, GraduationCap, Code, Zap, Users, TrendingUp, Globe, MessageCircle } from 'lucide-react';
+import { Linkedin, Mail, ExternalLink, MapPin, Calendar, Award, Briefcase, GraduationCap, Code, Zap, Users, TrendingUp, Globe, MessageCircle } from 'lucide-react';
 
 const Portfolio = () => {
   const personalData = {

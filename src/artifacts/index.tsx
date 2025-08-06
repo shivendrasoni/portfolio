@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { OpenAI } from 'openai';
 
 // Type definitions
@@ -17,7 +17,7 @@ interface AIResponse {
 const TerminalPortfolio = () => {
   const [input, setInput] = useState('');
   const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [currentPath, setCurrentPath] = useState('~');
+  const [currentPath] = useState('~');
   const [isProcessing, setIsProcessing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const historyRef = useRef<HTMLDivElement>(null);
