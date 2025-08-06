@@ -1,13 +1,26 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { OpenAI } from 'openai';
 
+// Type definitions
+interface HistoryEntry {
+  type: 'input' | 'output';
+  content: string;
+}
+
+interface AIResponse {
+  answer: string;
+  confidence: 'high' | 'medium' | 'low';
+  sources_used: string[];
+  follow_up_questions?: string[];
+}
+
 const TerminalPortfolio = () => {
   const [input, setInput] = useState('');
-  const [history, setHistory] = useState([]);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [currentPath, setCurrentPath] = useState('~');
   const [isProcessing, setIsProcessing] = useState(false);
-  const inputRef = useRef(null);
-  const historyRef = useRef(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const historyRef = useRef<HTMLDivElement>(null);
 
   const resumeData = {
     name: "Shivendra Soni",
@@ -44,9 +57,27 @@ const TerminalPortfolio = () => {
   };
 
   useEffect(() => {
+    const asciiArt = `
+    ███████╗██╗  ██╗██╗██╗   ██╗███████╗███╗   ██╗██████╗ ██████╗  █████╗ 
+    ██╔════╝██║  ██║██║██║   ██║██╔════╝████╗  ██║██╔══██╗██╔══██╗██╔══██╗
+    ███████╗███████║██║██║   ██║█████╗  ██╔██╗ ██║██║  ██║██████╔╝███████║
+    ╚════██║██╔══██║██║╚██╗ ██╔╝██╔══╝  ██║╚██╗██║██║  ██║██╔══██╗██╔══██║
+    ███████║██║  ██║██║ ╚████╔╝ ███████╗██║ ╚████║██████╔╝██║  ██║██║  ██║
+    ╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝  ╚══════╝╚═╝  ╚═══╝╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝
+
+                      ███████╗ ██████╗ ███╗   ██╗██╗
+                      ██╔════╝██╔═══██╗████╗  ██║██║
+                      ███████╗██║   ██║██╔██╗ ██║██║
+                      ╚════██║██║   ██║██║╚██╗██║██║
+                      ███████║╚██████╔╝██║ ╚████║██║
+                      ╚══════╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝
+
+                    Welcome to Shivendra's Terminal Portfolio!
+                         Type "help" to see available commands.
+`;
+    
     setHistory([
-      { type: 'output', content: 'Welcome to Shivendra\'s Terminal Portfolio!' },
-      { type: 'output', content: 'Type "help" to see available commands.' },
+      { type: 'output', content: asciiArt },
       { type: 'output', content: '' }
     ]);
   }, []);
@@ -63,11 +94,11 @@ const TerminalPortfolio = () => {
     }
   }, [isProcessing]);
 
-  const addToHistory = (type, content) => {
+  const addToHistory = (type: 'input' | 'output', content: string) => {
     setHistory(prev => [...prev, { type, content }]);
   };
 
-  const askAI = async (question) => {
+  const askAI = async (question: string) => {
     setIsProcessing(true);
     addToHistory('output', 'AI Assistant is thinking...');
   
@@ -166,11 +197,11 @@ const TerminalPortfolio = () => {
       // Add follow-up questions if available
       if (parsedResponse.follow_up_questions && parsedResponse.follow_up_questions.length > 0) {
         addToHistory('output', '\n💡 Follow-up questions:');
-        parsedResponse.follow_up_questions.forEach((question, index) => {
+        parsedResponse.follow_up_questions.forEach((question: string, index: number) => {
           addToHistory('output', `  ${index + 1}. ${question}`);
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('AI request failed:', error);
       
       // More detailed error messages
@@ -188,7 +219,7 @@ const TerminalPortfolio = () => {
     }
   };
 
-  const fileSystem = {
+  const fileSystem: Record<string, string> = {
     'about.md': resumeData.summary,
     'experience.md': resumeData.experience.map(exp => 
       `${exp.company} - ${exp.role} (${exp.period})\n${exp.highlights ? exp.highlights.map(h => `• ${h}`).join('\n') : ''}`
@@ -200,7 +231,7 @@ const TerminalPortfolio = () => {
     'README.md': `# ${resumeData.name}\n${resumeData.title}\n\n${resumeData.summary}`
   };
 
-  const executeCommand = async (cmd) => {
+  const executeCommand = async (cmd: string) => {
     const [command, ...args] = cmd.trim().split(' ');
     const argument = args.join(' ');
 
@@ -384,7 +415,7 @@ const TerminalPortfolio = () => {
         } else if (fileSystem[argument]) {
           const content = fileSystem[argument];
           const lines = content.split('\n').length;
-          const words = content.split(/\s+/).filter(w => w.length > 0).length;
+          const words = content.split(/\s+/).filter((w: string) => w.length > 0).length;
           const chars = content.length;
           addToHistory('output', `${lines.toString().padStart(8)} ${words.toString().padStart(7)} ${chars.toString().padStart(7)} ${argument}`);
         } else {
@@ -490,10 +521,10 @@ const TerminalPortfolio = () => {
 
   return (
     <div 
-      className="min-h-screen bg-black text-green-400 font-mono p-4 cursor-text"
+      className="min-h-screen bg-black text-green-400 font-mono cursor-text"
       onClick={handleClick}
     >
-      <div className="max-w-4xl mx-auto">
+      <div className="w-full px-4 py-2">
         {/* Terminal Header */}
         <div className="flex items-center justify-between mb-4 border-b border-green-400 pb-2">
           <div className="flex items-center space-x-2">
@@ -512,7 +543,7 @@ const TerminalPortfolio = () => {
         {/* Terminal Content */}
         <div 
           ref={historyRef}
-          className="h-96 overflow-y-auto mb-4 space-y-1"
+          className="h-[70vh] overflow-y-auto mb-4 space-y-1 text-sm"
           style={{ scrollBehavior: 'smooth' }}
         >
           {history.map((entry, index) => (
