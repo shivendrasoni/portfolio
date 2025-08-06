@@ -13,15 +13,17 @@ if [ -z "$REMOTE_URL" ]; then
 fi
 
 # Convert SSH URL to HTTPS format if needed
-if [[ $REMOTE_URL == git@github.com:* ]]; then
-    # Convert git@github.com:user/repo.git to https://github.com/user/repo
-    REPO_PATH=$(echo $REMOTE_URL | sed 's/git@github.com://' | sed 's/\.git$//')
+if [[ $REMOTE_URL == git@*:*/* ]]; then
+    # Handle SSH URLs like git@github.com:user/repo.git or git@gh-personal:user/repo.git
+    # Extract the repository path (user/repo)
+    REPO_PATH=$(echo $REMOTE_URL | sed 's/git@[^:]*://' | sed 's/\.git$//')
     HTTPS_URL="https://github.com/$REPO_PATH"
 elif [[ $REMOTE_URL == https://github.com/* ]]; then
     # Remove .git suffix if present
     HTTPS_URL=$(echo $REMOTE_URL | sed 's/\.git$//')
 else
-    echo "Remote URL is not a GitHub repository. Skipping README update."
+    echo "Remote URL format not recognized. Skipping README update."
+    echo "Remote URL: $REMOTE_URL"
     exit 0
 fi
 
