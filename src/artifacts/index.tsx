@@ -73,7 +73,8 @@ const TerminalPortfolio = () => {
                       ╚══════╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝
 
                     Welcome to Shivendra's Terminal Portfolio!
-                         Type "help" to see available commands.
+                    Type "help" to see available commands.
+                    Type '/portfolio' to see a visual portfolio.
 `;
     
     setHistory([
@@ -521,7 +522,7 @@ const TerminalPortfolio = () => {
 
   return (
     <div 
-      className="min-h-screen bg-black text-green-400 font-mono cursor-text"
+      className="h-screen bg-black text-green-400 font-mono cursor-text overflow-hidden"
       onClick={handleClick}
     >
       <div className="w-full px-4 py-2">
@@ -543,7 +544,7 @@ const TerminalPortfolio = () => {
         {/* Terminal Content */}
         <div 
           ref={historyRef}
-          className="h-[70vh] overflow-y-auto mb-4 space-y-1 text-sm"
+          className="h-[67vh] overflow-y-auto mb-4 space-y-1 text-sm"
           style={{ scrollBehavior: 'smooth' }}
         >
           {history.map((entry, index) => (
