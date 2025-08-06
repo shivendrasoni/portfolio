@@ -9,7 +9,8 @@ export default defineConfig({
     react(),
     Pages({
       dirs: [{ dir: 'src/artifacts', baseRoute: '' }],
-      extensions: ['jsx', 'tsx'],   
+      extensions: ['jsx', 'tsx'],
+      exclude: ['**/components/**/*'],
     }),
   ],
   resolve: {
@@ -17,5 +18,12 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
       'src': path.resolve(__dirname, './src'),
     },
-  }
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: undefined,
+      },
+    },
+  },
 })
