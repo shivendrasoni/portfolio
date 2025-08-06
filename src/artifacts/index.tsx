@@ -16,7 +16,7 @@ interface AIResponse {
 
 // Personal Data Constants
 const PERSONAL_DATA = {
-  name: "Tom Soni",
+  name: "Shivendra Soni",
   title: "Engineering & AI Leader | Highlevel | GenAI Consultant",
   location: "Pune, Maharashtra, India",
   email: "shivendrasoni91@gmail.com",
