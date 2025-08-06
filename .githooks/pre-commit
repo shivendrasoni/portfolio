@@ -1,0 +1,61 @@
+#!/bin/bash
+
+# Pre-commit hook to automatically update the Vercel deploy button URL
+# This ensures the deploy button points to the current repository
+
+# Get the current git remote URL
+REMOTE_URL=$(git config --get remote.origin.url)
+
+# Exit if no remote URL is found
+if [ -z "$REMOTE_URL" ]; then
+    echo "No remote origin URL found. Skipping README update."
+    exit 0
+fi
+
+# Convert SSH URL to HTTPS format if needed
+if [[ $REMOTE_URL == git@github.com:* ]]; then
+    # Convert git@github.com:user/repo.git to https://github.com/user/repo
+    REPO_PATH=$(echo $REMOTE_URL | sed 's/git@github.com://' | sed 's/\.git$//')
+    HTTPS_URL="https://github.com/$REPO_PATH"
+elif [[ $REMOTE_URL == https://github.com/* ]]; then
+    # Remove .git suffix if present
+    HTTPS_URL=$(echo $REMOTE_URL | sed 's/\.git$//')
+else
+    echo "Remote URL is not a GitHub repository. Skipping README update."
+    exit 0
+fi
+
+# Check if README.md exists
+if [ ! -f "README.md" ]; then
+    echo "README.md not found. Skipping update."
+    exit 0
+fi
+
+# Current deploy button pattern
+CURRENT_PATTERN="https://vercel.com/new/clone?repository-url=https://github.com/[^)]*"
+NEW_URL="https://vercel.com/new/clone?repository-url=$HTTPS_URL"
+
+# Check if the URL needs updating
+if grep -q "$NEW_URL" README.md; then
+    echo "Deploy button URL is already up to date."
+    exit 0
+fi
+
+# Update the deploy button URL in README.md
+if grep -q "https://vercel.com/new/clone?repository-url=" README.md; then
+    # Use a more specific pattern to match the exact line
+    sed -i.bak "s|https://vercel.com/new/clone?repository-url=https://github.com/[^)]*|$NEW_URL|g" README.md
+    
+    # Remove backup file
+    rm -f README.md.bak
+    
+    # Add the updated README.md to the commit
+    git add README.md
+    
+    echo "✅ Updated deploy button URL to: $NEW_URL"
+    echo "📝 README.md has been updated and staged for commit."
+else
+    echo "Deploy button pattern not found in README.md. Skipping update."
+fi
+
+exit 0
