@@ -221,7 +221,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙏 Acknowledgments
 
 - Built with [Vite](https://vitejs.dev/) and [React](https://reactjs.org/)
-- UI components from [shadcn/ui](https://ui.shadcn.com/)
+- [Claude Artifact Runner](https://github.com/claudio-silva/claude-artifact-runner) by [Claudio](https://github.com/claudio-silva)
 - Styled with [Tailwind CSS](https://tailwindcss.com/)
 - AI powered by [OpenAI](https://openai.com/)
 
