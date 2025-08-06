@@ -14,50 +14,45 @@ interface AIResponse {
   follow_up_questions?: string[];
 }
 
-const TerminalPortfolio = () => {
-  const [input, setInput] = useState('');
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [currentPath] = useState('~');
-  const [isProcessing, setIsProcessing] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const historyRef = useRef<HTMLDivElement>(null);
+// Personal Data Constants
+const PERSONAL_DATA = {
+  name: "Tom Soni",
+  title: "Engineering & AI Leader | Highlevel | GenAI Consultant",
+  location: "Pune, Maharashtra, India",
+  email: "shivendrasoni91@gmail.com",
+  linkedin: "linkedin.com/in/shivendrasoni",
+  blog: "medium.com/@shivendrasoni",
+  topmate: "topmate.io/shivendra",
+  summary: "Associate Director of Engineering at AmberStudent, leading 35+ engineers in global student accommodation solutions. 10+ years experience with Phonepe, Flipkart, Mindtickle, SAP Labs. B.Tech from IIIT, passionate about Data Science and fostering collaborative engineering culture.",
+  skills: ["Communication", "Technical Design", "Strategic Thinking", "Team Leadership", "System Architecture"],
+  experience: [
+    {
+      company: "HighLevel",
+      role: "Associate Director of AI",
+      period: "Jan 2025 - Present",
+      location: "India"
+    },
+    {
+      company: "Amber",
+      role: "Associate Director of Engineering",
+      period: "Apr 2024 - Jan 2025",
+      highlights: ["AI First initiatives", "Performance dashboards"]
+    },
+    {
+      company: "Amber",
+      role: "Senior Software Engineering Manager", 
+      period: "Jan 2023 - May 2024",
+      highlights: ["Scaled team 5→40 members", "Mobile app: 200k downloads", "China market entry"]
+    }
+  ],
+  education: "B.Tech Information Technology, Indian Institute of Information Technology (2010-2014)",
+  awards: ["First Runners Up - What the Hack 2.0", "Intel IoT Roadshow Finalist", "ET Power of Ideas Top 50"]
+};
 
-  const resumeData = {
-    name: "Shivendra Soni",
-    title: "Engineering & AI Leader | Highlevel | GenAI Consultant",
-    location: "Pune, Maharashtra, India",
-    email: "shivendrasoni91@gmail.com",
-    linkedin: "linkedin.com/in/shivendrasoni",
-    blog: "medium.com/@shivendrasoni",
-    topmate: "topmate.io/shivendra",
-    summary: "Associate Director of Engineering at AmberStudent, leading 35+ engineers in global student accommodation solutions. 10+ years experience with Phonepe, Flipkart, Mindtickle, SAP Labs. B.Tech from IIIT, passionate about Data Science and fostering collaborative engineering culture.",
-    skills: ["Communication", "Technical Design", "Strategic Thinking", "Team Leadership", "System Architecture"],
-    experience: [
-      {
-        company: "HighLevel",
-        role: "Associate Director of AI",
-        period: "Jan 2025 - Present",
-        location: "India"
-      },
-      {
-        company: "Amber",
-        role: "Associate Director of Engineering",
-        period: "Apr 2024 - Jan 2025",
-        highlights: ["AI First initiatives", "Performance dashboards"]
-      },
-      {
-        company: "Amber",
-        role: "Senior Software Engineering Manager", 
-        period: "Jan 2023 - May 2024",
-        highlights: ["Scaled team 5→40 members", "Mobile app: 200k downloads", "China market entry"]
-      }
-    ],
-    education: "B.Tech Information Technology, Indian Institute of Information Technology (2010-2014)",
-    awards: ["First Runners Up - What the Hack 2.0", "Intel IoT Roadshow Finalist", "ET Power of Ideas Top 50"]
-  };
+const firstName = PERSONAL_DATA.name.toLowerCase().split(' ')[0].replace(' ', '')
 
-  useEffect(() => {
-    const asciiArt = `
+// ASCII Art Constants
+const SHIVENDRA_ASCII_ART = `
     ███████╗██╗  ██╗██╗██╗   ██╗███████╗███╗   ██╗██████╗ ██████╗  █████╗ 
     ██╔════╝██║  ██║██║██║   ██║██╔════╝████╗  ██║██╔══██╗██╔══██╗██╔══██╗
     ███████╗███████║██║██║   ██║█████╗  ██╔██╗ ██║██║  ██║██████╔╝███████║
@@ -72,10 +67,43 @@ const TerminalPortfolio = () => {
                       ███████║╚██████╔╝██║ ╚████║██║
                       ╚══════╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝
 
-                    Welcome to Shivendra's Terminal Portfolio!
+                    Welcome to ${firstName}'s Terminal Portfolio!
                     Type "help" to see available commands.
                     Type '/portfolio' to see a visual portfolio.
 `;
+
+const GENERIC_ASCII_ART = `
+████████╗███████╗██████╗ ███╗   ███╗██╗███╗   ██╗ █████╗ ██╗     
+╚══██╔══╝██╔════╝██╔══██╗████╗ ████║██║████╗  ██║██╔══██╗██║     
+   ██║   █████╗  ██████╔╝██╔████╔██║██║██╔██╗ ██║███████║██║     
+   ██║   ██╔══╝  ██╔══██╗██║╚██╔╝██║██║██║╚██╗██║██╔══██║██║     
+   ██║   ███████╗██║  ██║██║ ╚═╝ ██║██║██║ ╚████║██║  ██║███████╗
+   ╚═╝   ╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝╚══════╝
+
+██████╗  ██████╗ ██████╗ ████████╗███████╗ ██████╗ ██╗     ██╗ ██████╗ 
+██╔══██╗██╔═══██╗██╔══██╗╚══██╔══╝██╔════╝██╔═══██╗██║     ██║██╔═══██╗
+██████╔╝██║   ██║██████╔╝   ██║   █████╗  ██║   ██║██║     ██║██║   ██║
+██╔═══╝ ██║   ██║██╔══██╗   ██║   ██╔══╝  ██║   ██║██║     ██║██║   ██║
+██║     ╚██████╔╝██║  ██║   ██║   ██║     ╚██████╔╝███████╗██║╚██████╔╝
+╚═╝      ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚═╝      ╚═════╝ ╚══════╝╚═╝ ╚═════╝ 
+
+                    Welcome to Terminal Portfolio!
+                    Type "help" to see available commands.
+                    Type '/portfolio' to see a visual portfolio.
+`;
+
+const TerminalPortfolio = () => {
+  const [input, setInput] = useState('');
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [currentPath] = useState('~');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const historyRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Determine which ASCII art to use based on the name
+    const isShivendra = PERSONAL_DATA.name.toLowerCase().includes('shivendra');
+    const asciiArt = isShivendra ? SHIVENDRA_ASCII_ART : GENERIC_ASCII_ART;
     
     setHistory([
       { type: 'output', content: asciiArt },
@@ -110,7 +138,7 @@ const TerminalPortfolio = () => {
           dangerouslyAllowBrowser: true
         });
       
-      const systemPrompt = `You are an AI assistant helping answer questions about Shivendra Soni's professional background. 
+      const systemPrompt = `You are an AI assistant helping answer questions about ${PERSONAL_DATA.name}'s professional background. 
   
   You must respond in valid JSON format with this exact structure:
   {
@@ -129,23 +157,23 @@ const TerminalPortfolio = () => {
   - Provide 1-3 relevant follow-up questions when appropriate
   - Keep the answer concise but informative`;
   
-      const userPrompt = `Here's Shivendra Soni's resume data:
+      const userPrompt = `Here's ${PERSONAL_DATA.name}'s resume data:
   
-  Name: ${resumeData.name}
-  Title: ${resumeData.title}
-  Location: ${resumeData.location}
-  Contact: ${resumeData.email}
-  Summary: ${resumeData.summary}
+  Name: ${PERSONAL_DATA.name}
+  Title: ${PERSONAL_DATA.title}
+  Location: ${PERSONAL_DATA.location}
+  Contact: ${PERSONAL_DATA.email}
+  Summary: ${PERSONAL_DATA.summary}
   
-  Skills: ${resumeData.skills.join(', ')}
+  Skills: ${PERSONAL_DATA.skills.join(', ')}
   
   Recent Experience:
-  ${resumeData.experience.map(exp => 
+  ${PERSONAL_DATA.experience.map(exp => 
   `- ${exp.role} at ${exp.company} (${exp.period})${exp.highlights ? ': ' + exp.highlights.join(', ') : ''}`
   ).join('\n')}
   
-  Education: ${resumeData.education}
-  Awards: ${resumeData.awards.join(', ')}
+  Education: ${PERSONAL_DATA.education}
+  Awards: ${PERSONAL_DATA.awards.join(', ')}
   
   Question: ${question}`;
   
@@ -221,15 +249,15 @@ const TerminalPortfolio = () => {
   };
 
   const fileSystem: Record<string, string> = {
-    'about.md': resumeData.summary,
-    'experience.md': resumeData.experience.map(exp => 
+    'about.md': PERSONAL_DATA.summary,
+    'experience.md': PERSONAL_DATA.experience.map(exp => 
       `${exp.company} - ${exp.role} (${exp.period})\n${exp.highlights ? exp.highlights.map(h => `• ${h}`).join('\n') : ''}`
     ).join('\n\n'),
-    'skills.md': resumeData.skills.join('\n'),
-    'contact.md': `Email: ${resumeData.email}\nLinkedIn: ${resumeData.linkedin}\nBlog: ${resumeData.blog}\nTopmate: ${resumeData.topmate}`,
-    'awards.md': resumeData.awards.join('\n'),
-    'education.md': resumeData.education,
-    'README.md': `# ${resumeData.name}\n${resumeData.title}\n\n${resumeData.summary}`
+    'skills.md': PERSONAL_DATA.skills.join('\n'),
+    'contact.md': `Email: ${PERSONAL_DATA.email}\nLinkedIn: ${PERSONAL_DATA.linkedin}\nBlog: ${PERSONAL_DATA.blog}\nTopmate: ${PERSONAL_DATA.topmate}`,
+    'awards.md': PERSONAL_DATA.awards.join('\n'),
+    'education.md': PERSONAL_DATA.education,
+    'README.md': `# ${PERSONAL_DATA.name}\n${PERSONAL_DATA.title}\n\n${PERSONAL_DATA.summary}`
   };
 
   const executeCommand = async (cmd: string) => {
@@ -280,17 +308,17 @@ const TerminalPortfolio = () => {
 
       case 'about':
       case 'summary':
-        addToHistory('output', `👨‍💻 ${resumeData.name}`);
-        addToHistory('output', `📍 ${resumeData.location}`);
+        addToHistory('output', `👨‍💻 ${PERSONAL_DATA.name}`);
+        addToHistory('output', `📍 ${PERSONAL_DATA.location}`);
         addToHistory('output', '');
-        addToHistory('output', resumeData.summary);
+        addToHistory('output', PERSONAL_DATA.summary);
         break;
 
       case 'experience':
       case 'work':
         addToHistory('output', '💼 Work Experience:');
         addToHistory('output', '');
-        resumeData.experience.forEach(exp => {
+        PERSONAL_DATA.experience.forEach(exp => {
           addToHistory('output', `🏢 ${exp.company}`);
           addToHistory('output', `   ${exp.role}`);
           addToHistory('output', `   ${exp.period}`);
@@ -306,7 +334,7 @@ const TerminalPortfolio = () => {
       case 'skills':
         addToHistory('output', '🛠️  Technical Skills:');
         addToHistory('output', '');
-        resumeData.skills.forEach(skill => {
+        PERSONAL_DATA.skills.forEach(skill => {
           addToHistory('output', `  ✓ ${skill}`);
         });
         break;
@@ -314,13 +342,13 @@ const TerminalPortfolio = () => {
       case 'education':
         addToHistory('output', '🎓 Education:');
         addToHistory('output', '');
-        addToHistory('output', resumeData.education);
+        addToHistory('output', PERSONAL_DATA.education);
         break;
 
       case 'awards':
         addToHistory('output', '🏆 Honors & Awards:');
         addToHistory('output', '');
-        resumeData.awards.forEach(award => {
+        PERSONAL_DATA.awards.forEach(award => {
           addToHistory('output', `  🥇 ${award}`);
         });
         break;
@@ -328,10 +356,10 @@ const TerminalPortfolio = () => {
       case 'contact':
         addToHistory('output', '📞 Contact Information:');
         addToHistory('output', '');
-        addToHistory('output', `📧 Email: ${resumeData.email}`);
-        addToHistory('output', `🔗 LinkedIn: ${resumeData.linkedin}`);
-        addToHistory('output', `📝 Blog: ${resumeData.blog}`);
-        addToHistory('output', `🎯 Topmate: ${resumeData.topmate}`);
+        addToHistory('output', `📧 Email: ${PERSONAL_DATA.email}`);
+        addToHistory('output', `🔗 LinkedIn: ${PERSONAL_DATA.linkedin}`);
+        addToHistory('output', `📝 Blog: ${PERSONAL_DATA.blog}`);
+        addToHistory('output', `🎯 Topmate: ${PERSONAL_DATA.topmate}`);
         break;
 
       case 'clear':
@@ -339,11 +367,11 @@ const TerminalPortfolio = () => {
         break;
 
       case 'whoami':
-        addToHistory('output', resumeData.name.toLowerCase().replace(' ', '_'));
+        addToHistory('output', PERSONAL_DATA.name.toLowerCase().replace(' ', '_'));
         break;
 
       case 'pwd':
-        addToHistory('output', '/home/shivendra/portfolio');
+        addToHistory('output', `/home/${firstName}/portfolio`);
         break;
 
       case '/ask':
@@ -370,7 +398,7 @@ const TerminalPortfolio = () => {
           Object.keys(fileSystem).forEach(file => {
             const size = fileSystem[file].length.toString().padStart(4);
             const date = 'Aug  6 12:00';
-            addToHistory('output', `-rw-r--r-- 1 shivendra staff ${size} ${date} ${file}`);
+            addToHistory('output', `-rw-r--r-- 1 ${firstName} staff ${size} ${date} ${file}`);
           });
         } else {
           const files = Object.keys(fileSystem).join('  ');
@@ -468,9 +496,9 @@ const TerminalPortfolio = () => {
 
       case 'uname':
         if (args.includes('-a')) {
-          addToHistory('output', 'ShivendraOS 1.0.0 Terminal-Portfolio x86_64');
+          addToHistory('output', `${firstName}OS 1.0.0 Terminal-Portfolio x86_64`);
         } else {
-          addToHistory('output', 'ShivendraOS');
+          addToHistory('output', `${firstName}OS`);
         }
         break;
 
@@ -534,7 +562,7 @@ const TerminalPortfolio = () => {
               <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
               <div className="w-3 h-3 bg-green-500 rounded-full"></div>
             </div>
-            <span className="text-white ml-4">shivendra@portfolio:~</span>
+            <span className="text-white ml-4">{firstName}@portfolio:~</span>
           </div>
           <div className="text-green-300 text-sm">
             {new Date().toLocaleString()}
