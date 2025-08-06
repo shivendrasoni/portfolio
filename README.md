@@ -123,7 +123,7 @@ Click the deploy button below and follow the prompts:
 **Important Steps:**
 1. **Update the repository URL** to point to **your forked repository**:
    ```markdown
-   [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/YOUR_USERNAME/portfolio)
+   [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/shivendrasoni/portfolio)
    ```
 
 2. **During deployment**, when prompted for environment variables, add:
