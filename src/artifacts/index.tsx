@@ -51,7 +51,7 @@ const PERSONAL_DATA = {
 
 const firstName = PERSONAL_DATA.name.toLowerCase().split(' ')[0].replace(' ', '')
 
-// ASCII Art Constants
+// ASCII Art Constants - Desktop versions
 const SHIVENDRA_ASCII_ART = `
     ███████╗██╗  ██╗██╗██╗   ██╗███████╗███╗   ██╗██████╗ ██████╗  █████╗ 
     ██╔════╝██║  ██║██║██║   ██║██╔════╝████╗  ██║██╔══██╗██╔══██╗██╔══██╗
@@ -92,24 +92,82 @@ const GENERIC_ASCII_ART = `
                     Type '/portfolio' to see a visual portfolio.
 `;
 
+// Mobile-friendly ASCII Art - Smaller and simpler
+const SHIVENDRA_ASCII_ART_MOBILE = `
+  ███████╗██╗  ██╗██╗██╗   ██╗
+  ██╔════╝██║  ██║██║██║   ██║
+  ███████╗███████║██║██║   ██║
+  ╚════██║██╔══██║██║╚██╗ ██╔╝
+  ███████║██║  ██║██║ ╚████╔╝ 
+  ╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝  
+
+    ███████╗ ██████╗ ███╗   ██╗██╗
+    ██╔════╝██╔═══██╗████╗  ██║██║
+    ███████╗██║   ██║██╔██╗ ██║██║
+    ╚════██║██║   ██║██║╚██╗██║██║
+    ███████║╚██████╔╝██║ ╚████║██║
+    ╚══════╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝
+
+    Welcome to ${firstName}'s Terminal!
+    Type "help" for commands.
+`;
+
+const GENERIC_ASCII_ART_MOBILE = `
+████████╗███████╗██████╗ ███╗   ███╗
+╚══██╔══╝██╔════╝██╔══██╗████╗ ████║
+   ██║   █████╗  ██████╔╝██╔████╔██║
+   ██║   ██╔══╝  ██╔══██╗██║╚██╔╝██║
+   ██║   ███████╗██║  ██║██║ ╚═╝ ██║
+   ╚═╝   ╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝
+
+██████╗  ██████╗ ██████╗ ████████╗
+██╔══██╗██╔═══██╗██╔══██╗╚══██╔══╝
+██████╔╝██║   ██║██████╔╝   ██║   
+██╔═══╝ ██║   ██║██╔══██╗   ██║   
+██║     ╚██████╔╝██║  ██║   ██║   
+╚═╝      ╚═════╝ ╚═╝  ╚═╝   ╚═╝   
+
+    Welcome to Terminal Portfolio!
+    Type "help" for commands.
+`;
+
 const TerminalPortfolio = () => {
   const [input, setInput] = useState('');
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [currentPath] = useState('~');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const historyRef = useRef<HTMLDivElement>(null);
 
+  // Detect screen size for responsive ASCII art
   useEffect(() => {
-    // Determine which ASCII art to use based on the name
+    const checkScreenSize = () => {
+      setIsMobile(window.innerWidth < 768); // Mobile breakpoint
+    };
+    
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
+
+  useEffect(() => {
+    // Determine which ASCII art to use based on the name and screen size
     const isShivendra = PERSONAL_DATA.name.toLowerCase().includes('shivendra');
-    const asciiArt = isShivendra ? SHIVENDRA_ASCII_ART : GENERIC_ASCII_ART;
+    let asciiArt;
+    
+    if (isMobile) {
+      asciiArt = isShivendra ? SHIVENDRA_ASCII_ART_MOBILE : GENERIC_ASCII_ART_MOBILE;
+    } else {
+      asciiArt = isShivendra ? SHIVENDRA_ASCII_ART : GENERIC_ASCII_ART;
+    }
     
     setHistory([
       { type: 'output', content: asciiArt },
       { type: 'output', content: '' }
     ]);
-  }, []);
+  }, [isMobile]);
 
   useEffect(() => {
     if (historyRef.current) {
@@ -553,26 +611,26 @@ const TerminalPortfolio = () => {
       className="h-screen bg-black text-green-400 font-mono cursor-text overflow-hidden"
       onClick={handleClick}
     >
-      <div className="w-full px-4 py-2">
+      <div className={`w-full ${isMobile ? 'px-2 py-1' : 'px-4 py-2'}`}>
         {/* Terminal Header */}
-        <div className="flex items-center justify-between mb-4 border-b border-green-400 pb-2">
+        <div className={`flex items-center justify-between ${isMobile ? 'mb-2' : 'mb-4'} border-b border-green-400 pb-2`}>
           <div className="flex items-center space-x-2">
             <div className="flex space-x-1">
-              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-              <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+              <div className={`${isMobile ? 'w-2 h-2' : 'w-3 h-3'} bg-red-500 rounded-full`}></div>
+              <div className={`${isMobile ? 'w-2 h-2' : 'w-3 h-3'} bg-yellow-500 rounded-full`}></div>
+              <div className={`${isMobile ? 'w-2 h-2' : 'w-3 h-3'} bg-green-500 rounded-full`}></div>
             </div>
-            <span className="text-white ml-4">{firstName}@portfolio:~</span>
+            <span className={`text-white ${isMobile ? 'ml-2 text-sm' : 'ml-4'}`}>{firstName}@portfolio:~</span>
           </div>
-          <div className="text-green-300 text-sm">
-            {new Date().toLocaleString()}
+          <div className={`text-green-300 ${isMobile ? 'text-xs' : 'text-sm'}`}>
+            {isMobile ? new Date().toLocaleTimeString() : new Date().toLocaleString()}
           </div>
         </div>
 
         {/* Terminal Content */}
         <div 
           ref={historyRef}
-          className="h-[67vh] overflow-y-auto mb-4 space-y-1 text-sm"
+          className="h-[67vh] overflow-y-auto mb-4 space-y-1 text-sm overflow-x-auto"
           style={{ scrollBehavior: 'smooth' }}
         >
           {history.map((entry, index) => (
@@ -582,7 +640,7 @@ const TerminalPortfolio = () => {
                 : entry.content.includes('🤖') 
                   ? 'text-blue-400' 
                   : 'text-green-400'
-            }`}>
+            } ${isMobile ? 'text-xs' : 'text-sm'}`}>
               {entry.content}
             </div>
           ))}
@@ -611,8 +669,8 @@ const TerminalPortfolio = () => {
         </div>
 
         {/* Quick Commands */}
-        <div className="mt-6 pt-4 border-t border-green-900">
-          <div className="text-green-600 text-sm mb-2">Quick Actions:</div>
+        <div className={`${isMobile ? 'mt-4 pt-2' : 'mt-6 pt-4'} border-t border-green-900`}>
+          <div className={`text-green-600 ${isMobile ? 'text-xs' : 'text-sm'} mb-2`}>Quick Actions:</div>
           <div className="flex flex-wrap gap-2 mb-3">
             {['about', 'experience', 'skills', 'contact', 'awards'].map(cmd => (
               <button
@@ -623,13 +681,13 @@ const TerminalPortfolio = () => {
                   setInput('');
                 }}
                 disabled={isProcessing}
-                className="bg-green-900 hover:bg-green-800 text-green-300 px-3 py-1 rounded text-sm transition-colors disabled:opacity-50"
+                className={`bg-green-900 hover:bg-green-800 text-green-300 ${isMobile ? 'px-2 py-1 text-xs' : 'px-3 py-1 text-sm'} rounded transition-colors disabled:opacity-50`}
               >
                 {cmd}
               </button>
             ))}
           </div>
-          <div className="text-green-600 text-sm mb-2">Shell Commands:</div>
+          <div className={`text-green-600 ${isMobile ? 'text-xs' : 'text-sm'} mb-2`}>Shell Commands:</div>
           <div className="flex flex-wrap gap-2">
             {['ls -la', 'grep engineer', 'find mobile', 'tree', 'history'].map(cmd => (
               <button
@@ -640,7 +698,7 @@ const TerminalPortfolio = () => {
                   setInput('');
                 }}
                 disabled={isProcessing}
-                className="bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1 rounded text-sm transition-colors disabled:opacity-50"
+                className={`bg-gray-800 hover:bg-gray-700 text-gray-300 ${isMobile ? 'px-2 py-1 text-xs' : 'px-3 py-1 text-sm'} rounded transition-colors disabled:opacity-50`}
               >
                 {cmd}
               </button>
@@ -649,8 +707,8 @@ const TerminalPortfolio = () => {
         </div>
 
         {/* AI Assistant Info */}
-        <div className="mt-4 p-3 border border-blue-900 bg-blue-950 bg-opacity-30 rounded">
-          <div className="text-blue-400 text-sm mb-1">🤖 AI Assistant Available</div>
+        <div className={`${isMobile ? 'mt-2 p-2' : 'mt-4 p-3'} border border-blue-900 bg-blue-950 bg-opacity-30 rounded`}>
+          <div className={`text-blue-400 ${isMobile ? 'text-xs' : 'text-sm'} mb-1`}>🤖 AI Assistant Available</div>
           <div className="text-blue-300 text-xs">
             Use "/ask [your question]" to get AI-powered answers about my background and experience.
           </div>
