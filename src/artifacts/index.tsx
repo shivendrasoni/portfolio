@@ -362,6 +362,9 @@ const TerminalPortfolio = () => {
         addToHistory('output', '');
         addToHistory('output', '  Navigation:');
         addToHistory('output', '    /portfolio    - Switch to visual portfolio');
+        addToHistory('output', '');
+        addToHistory('output', '  Games:');
+        addToHistory('output', '    doom          - Launch DOOM (opens /doom)');
         break;
 
       case 'about':
@@ -448,6 +451,16 @@ const TerminalPortfolio = () => {
         setTimeout(() => {
           window.location.href = '/portfolio';
         }, 1500);
+        break;
+
+      case 'doom':
+      case '/doom':
+        addToHistory('output', '🎮 Launching DOOM...');
+        addToHistory('output', '');
+        addToHistory('output', '⌛ Redirecting to /doom');
+        setTimeout(() => {
+          window.location.href = '/doom';
+        }, 1000);
         break;
 
       case 'ls':

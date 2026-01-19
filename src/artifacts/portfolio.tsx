@@ -15,12 +15,12 @@ const Portfolio = () => {
     github: "https://github.com/shivendrasoni",
     blog: "https://medium.com/@shivendrasoni",
     topmate: "https://topmate.io/shivendra",
-    summary: "Associate Director of AI at HighLevel, with 10+ years of experience leading engineering teams at scale. Previously led 35+ engineers at AmberStudent in global student accommodation solutions. Experienced with Phonepe, Flipkart, Mindtickle, SAP Labs. B.Tech from IIIT, passionate about AI, Data Science and fostering collaborative engineering culture.",
+    summary: "Associate Director of AI at HighLevel, leading a team of around 10 brilliant engineers in AI initiatives. Previously led 35+ engineers at AmberStudent in global student accommodation solutions. Experienced with Phonepe, Flipkart, Mindtickle, SAP Labs. B.Tech from IIIT, passionate about AI, Data Science, LLM development, and fostering collaborative engineering culture. Active researcher in AI transparency and agent identification protocols.",
     
     skills: {
       leadership: ["Team Leadership", "Strategic Thinking", "Technical Design", "Communication", "Mentoring"],
-      technical: ["System Architecture", "AI/ML", "Data Science", "Cloud Computing", "Microservices"],
-      domains: ["FinTech", "E-commerce", "EdTech", "PropTech", "SaaS"],
+      technical: ["AI/ML", "LLM Development", "Vector Databases", "System Architecture", "Data Science", "Cloud Computing", "Microservices"],
+      domains: ["FinTech", "E-commerce", "EdTech", "PropTech", "SaaS", "AI Security"],
     },
     
     experience: [
@@ -79,6 +79,20 @@ const Portfolio = () => {
     
     projects: [
       {
+        title: "Vector Cache",
+        company: "Open Source",
+        description: "A streamlined Python library that enhances LLM query performance through semantic caching, making responses faster and more cost-effective.",
+        technologies: ["Python", "LLM", "Semantic Caching", "Vector Databases"],
+        impact: "Reduces LLM costs and response times through semantic similarity caching"
+      },
+      {
+        title: "AI Transparency Markup (AITM)",
+        company: "Research",
+        description: "A protocol for AI Agent self-identification in text and voice interactions, promoting transparency in AI communications.",
+        technologies: ["AI/ML", "Protocol Design", "Voice Recognition", "NLP"],
+        impact: "Published research on AI transparency and agent identification"
+      },
+      {
         title: "AI-Powered Marketing Automation",
         company: "HighLevel",
         description: "Leading development of intelligent marketing automation features using machine learning to optimize customer engagement and conversion rates.",
@@ -110,8 +124,11 @@ const Portfolio = () => {
     
     awards: [
       "First Runners Up - What the Hack 2.0",
+      "Won 1st prize at Go-hack '17 - Gojek",
       "Intel IoT Roadshow Finalist", 
-      "ET Power of Ideas Top 50"
+      "ET Power of Ideas Top 50",
+      "Won .Net Idea Innovation Challenge - IIT Delhi",
+      "Multi-Dimensional Visual Analytics Patent - US 20170039741"
     ]
   };
 
