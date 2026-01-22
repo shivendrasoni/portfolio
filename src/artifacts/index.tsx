@@ -1,721 +1,598 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { OpenAI } from 'openai';
+import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/button';
+import { 
+  Linkedin, Briefcase, Code, Zap, Users, TrendingUp, 
+  Globe, MessageCircle, Terminal, ArrowRight, Mail,
+  MessageSquare, X, Send, Loader2
+} from 'lucide-react';
 
-// Type definitions
-interface HistoryEntry {
-  type: 'input' | 'output';
-  content: string;
-}
-
-interface AIResponse {
-  answer: string;
-  confidence: 'high' | 'medium' | 'low';
-  sources_used: string[];
-  follow_up_questions?: string[];
-}
-
-// Personal Data Constants
-const PERSONAL_DATA = {
-  name: "Shivendra Soni",
-  title: "Engineering & AI Leader | Highlevel | GenAI Consultant",
-  location: "Pune, Maharashtra, India",
-  email: "shivendrasoni91@gmail.com",
-  linkedin: "linkedin.com/in/shivendrasoni",
-  blog: "medium.com/@shivendrasoni",
-  topmate: "topmate.io/shivendra",
-  summary: "Associate Director of Engineering at AmberStudent, leading 35+ engineers in global student accommodation solutions. 10+ years experience with Phonepe, Flipkart, Mindtickle, SAP Labs. B.Tech from IIIT, passionate about Data Science and fostering collaborative engineering culture.",
-  skills: ["Communication", "Technical Design", "Strategic Thinking", "Team Leadership", "System Architecture"],
-  experience: [
-    {
-      company: "HighLevel",
-      role: "Associate Director of AI",
-      period: "Jan 2025 - Present",
-      location: "India"
-    },
-    {
-      company: "Amber",
-      role: "Associate Director of Engineering",
-      period: "Apr 2024 - Jan 2025",
-      highlights: ["AI First initiatives", "Performance dashboards"]
-    },
-    {
-      company: "Amber",
-      role: "Senior Software Engineering Manager", 
-      period: "Jan 2023 - May 2024",
-      highlights: ["Scaled team 5→40 members", "Mobile app: 200k downloads", "China market entry"]
+// Simple hook for intersection observer animations
+const useOnScreen = (ref: React.RefObject<HTMLElement>, rootMargin = '0px') => {
+  const [isIntersecting, setIntersecting] = useState(false);
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIntersecting(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin }
+    );
+    if (ref.current) {
+      observer.observe(ref.current);
     }
-  ],
-  education: "B.Tech Information Technology, Indian Institute of Information Technology (2010-2014)",
-  awards: ["First Runners Up - What the Hack 2.0", "Intel IoT Roadshow Finalist", "ET Power of Ideas Top 50"]
+    return () => {
+      observer.disconnect();
+    };
+  }, [ref, rootMargin]);
+  return isIntersecting;
 };
 
-const firstName = PERSONAL_DATA.name.toLowerCase().split(' ')[0].replace(' ', '')
-
-// ASCII Art Constants - Desktop versions
-const SHIVENDRA_ASCII_ART = `
-    ███████╗██╗  ██╗██╗██╗   ██╗███████╗███╗   ██╗██████╗ ██████╗  █████╗ 
-    ██╔════╝██║  ██║██║██║   ██║██╔════╝████╗  ██║██╔══██╗██╔══██╗██╔══██╗
-    ███████╗███████║██║██║   ██║█████╗  ██╔██╗ ██║██║  ██║██████╔╝███████║
-    ╚════██║██╔══██║██║╚██╗ ██╔╝██╔══╝  ██║╚██╗██║██║  ██║██╔══██╗██╔══██║
-    ███████║██║  ██║██║ ╚████╔╝ ███████╗██║ ╚████║██████╔╝██║  ██║██║  ██║
-    ╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝  ╚══════╝╚═╝  ╚═══╝╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝
-
-                      ███████╗ ██████╗ ███╗   ██╗██╗
-                      ██╔════╝██╔═══██╗████╗  ██║██║
-                      ███████╗██║   ██║██╔██╗ ██║██║
-                      ╚════██║██║   ██║██║╚██╗██║██║
-                      ███████║╚██████╔╝██║ ╚████║██║
-                      ╚══════╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝
-
-                    Welcome to ${firstName}'s Terminal Portfolio!
-                    Type "help" to see available commands.
-                    Type '/portfolio' to see a visual portfolio.
-`;
-
-const GENERIC_ASCII_ART = `
-████████╗███████╗██████╗ ███╗   ███╗██╗███╗   ██╗ █████╗ ██╗     
-╚══██╔══╝██╔════╝██╔══██╗████╗ ████║██║████╗  ██║██╔══██╗██║     
-   ██║   █████╗  ██████╔╝██╔████╔██║██║██╔██╗ ██║███████║██║     
-   ██║   ██╔══╝  ██╔══██╗██║╚██╔╝██║██║██║╚██╗██║██╔══██║██║     
-   ██║   ███████╗██║  ██║██║ ╚═╝ ██║██║██║ ╚████║██║  ██║███████╗
-   ╚═╝   ╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝╚══════╝
-
-██████╗  ██████╗ ██████╗ ████████╗███████╗ ██████╗ ██╗     ██╗ ██████╗ 
-██╔══██╗██╔═══██╗██╔══██╗╚══██╔══╝██╔════╝██╔═══██╗██║     ██║██╔═══██╗
-██████╔╝██║   ██║██████╔╝   ██║   █████╗  ██║   ██║██║     ██║██║   ██║
-██╔═══╝ ██║   ██║██╔══██╗   ██║   ██╔══╝  ██║   ██║██║     ██║██║   ██║
-██║     ╚██████╔╝██║  ██║   ██║   ██║     ╚██████╔╝███████╗██║╚██████╔╝
-╚═╝      ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚═╝      ╚═════╝ ╚══════╝╚═╝ ╚═════╝ 
-
-                    Welcome to Terminal Portfolio!
-                    Type "help" to see available commands.
-                    Type '/portfolio' to see a visual portfolio.
-`;
-
-// Mobile-friendly ASCII Art - Smaller and simpler
-const SHIVENDRA_ASCII_ART_MOBILE = `
-  ███████╗██╗  ██╗██╗██╗   ██╗
-  ██╔════╝██║  ██║██║██║   ██║
-  ███████╗███████║██║██║   ██║
-  ╚════██║██╔══██║██║╚██╗ ██╔╝
-  ███████║██║  ██║██║ ╚████╔╝ 
-  ╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝  
-
-    ███████╗ ██████╗ ███╗   ██╗██╗
-    ██╔════╝██╔═══██╗████╗  ██║██║
-    ███████╗██║   ██║██╔██╗ ██║██║
-    ╚════██║██║   ██║██║╚██╗██║██║
-    ███████║╚██████╔╝██║ ╚████║██║
-    ╚══════╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝
-
-    Welcome to ${firstName}'s Terminal!
-    Type "help" for commands.
-`;
-
-const GENERIC_ASCII_ART_MOBILE = `
-████████╗███████╗██████╗ ███╗   ███╗
-╚══██╔══╝██╔════╝██╔══██╗████╗ ████║
-   ██║   █████╗  ██████╔╝██╔████╔██║
-   ██║   ██╔══╝  ██╔══██╗██║╚██╔╝██║
-   ██║   ███████╗██║  ██║██║ ╚═╝ ██║
-   ╚═╝   ╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝
-
-██████╗  ██████╗ ██████╗ ████████╗
-██╔══██╗██╔═══██╗██╔══██╗╚══██╔══╝
-██████╔╝██║   ██║██████╔╝   ██║   
-██╔═══╝ ██║   ██║██╔══██╗   ██║   
-██║     ╚██████╔╝██║  ██║   ██║   
-╚═╝      ╚═════╝ ╚═╝  ╚═╝   ╚═╝   
-
-    Welcome to Terminal Portfolio!
-    Type "help" for commands.
-`;
-
-const TerminalPortfolio = () => {
-  const [input, setInput] = useState('');
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [currentPath] = useState('~');
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const historyRef = useRef<HTMLDivElement>(null);
-
-  // Detect screen size for responsive ASCII art
-  useEffect(() => {
-    const checkScreenSize = () => {
-      setIsMobile(window.innerWidth < 768); // Mobile breakpoint
-    };
-    
-    checkScreenSize();
-    window.addEventListener('resize', checkScreenSize);
-    
-    return () => window.removeEventListener('resize', checkScreenSize);
-  }, []);
-
-  useEffect(() => {
-    // Determine which ASCII art to use based on the name and screen size
-    const isShivendra = PERSONAL_DATA.name.toLowerCase().includes('shivendra');
-    let asciiArt;
-    
-    if (isMobile) {
-      asciiArt = isShivendra ? SHIVENDRA_ASCII_ART_MOBILE : GENERIC_ASCII_ART_MOBILE;
-    } else {
-      asciiArt = isShivendra ? SHIVENDRA_ASCII_ART : GENERIC_ASCII_ART;
-    }
-    
-    setHistory([
-      { type: 'output', content: asciiArt },
-      { type: 'output', content: '' }
-    ]);
-  }, [isMobile]);
-
-  useEffect(() => {
-    if (historyRef.current) {
-      historyRef.current.scrollTop = historyRef.current.scrollHeight;
-    }
-  }, [history]);
-
-  useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [isProcessing]);
-
-  const addToHistory = (type: 'input' | 'output', content: string) => {
-    setHistory(prev => [...prev, { type, content }]);
-  };
-
-  const askAI = async (question: string) => {
-    setIsProcessing(true);
-    addToHistory('output', 'AI Assistant is thinking...');
-  
-    try {
-              const client = new OpenAI({
-          apiKey: import.meta.env.VITE_OPENAI_API_KEY,
-          baseURL: "https://openrouter.ai/api/v1",
-          dangerouslyAllowBrowser: true
-        });
-      
-      const systemPrompt = `You are an AI assistant helping answer questions about ${PERSONAL_DATA.name}'s professional background. 
-  
-  You must respond in valid JSON format with this exact structure:
-  {
-  "answer": "Your detailed response here",
-  "confidence": "high|medium|low",
-  "sources_used": ["resume_data", "web_search"],
-  "follow_up_questions": ["Optional follow-up question 1", "Optional follow-up question 2"]
-  }
-  
-  Guidelines:
-  - Use "high" confidence for information directly from resume data
-  - Use "medium" confidence for reasonable inferences
-  - Use "low" confidence when information is limited
-  - Include "resume_data" in sources_used when using provided data
-  - Include "web_search" in sources_used if you need to search (but note: actual web search may be limited)
-  - Provide 1-3 relevant follow-up questions when appropriate
-  - Keep the answer concise but informative`;
-  
-      const userPrompt = `Here's ${PERSONAL_DATA.name}'s resume data:
-  
-  Name: ${PERSONAL_DATA.name}
-  Title: ${PERSONAL_DATA.title}
-  Location: ${PERSONAL_DATA.location}
-  Contact: ${PERSONAL_DATA.email}
-  Summary: ${PERSONAL_DATA.summary}
-  
-  Skills: ${PERSONAL_DATA.skills.join(', ')}
-  
-  Recent Experience:
-  ${PERSONAL_DATA.experience.map(exp => 
-  `- ${exp.role} at ${exp.company} (${exp.period})${exp.highlights ? ': ' + exp.highlights.join(', ') : ''}`
-  ).join('\n')}
-  
-  Education: ${PERSONAL_DATA.education}
-  Awards: ${PERSONAL_DATA.awards.join(', ')}
-  
-  Question: ${question}`;
-  
-      const response = await client.chat.completions.create({
-        model: "openai/gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: systemPrompt
-          },
-          {
-            role: "user",
-            content: userPrompt
-          }
-        ],
-        max_tokens: 800,
-        temperature: 0.7,
-        response_format: { type: "json_object" }
-      });
-  
-      const rawResponse = response.choices[0]?.message?.content || "{}";
-      
-      // Parse the structured response
-      let parsedResponse: AIResponse;
-      try {
-        parsedResponse = JSON.parse(rawResponse) as AIResponse;
-      } catch (parseError) {
-        console.error('Failed to parse AI response:', parseError);
-        parsedResponse = {
-          answer: rawResponse || "No response received",
-          confidence: "low",
-          sources_used: ["resume_data"]
-        };
-      }
-      
-      // Display the formatted response
-      addToHistory('output', '🤖 AI Response:');
-      addToHistory('output', parsedResponse.answer);
-      
-      // Add confidence indicator
-      const confidenceEmoji = parsedResponse.confidence === 'high' ? '🟢' : 
-                             parsedResponse.confidence === 'medium' ? '🟡' : '🔴';
-      addToHistory('output', `\n${confidenceEmoji} Confidence: ${parsedResponse.confidence.toUpperCase()}`);
-      
-      // Add sources used
-      if (parsedResponse.sources_used && parsedResponse.sources_used.length > 0) {
-        addToHistory('output', `📚 Sources: ${parsedResponse.sources_used.join(', ')}`);
-      }
-      
-      // Add follow-up questions if available
-      if (parsedResponse.follow_up_questions && parsedResponse.follow_up_questions.length > 0) {
-        addToHistory('output', '\n💡 Follow-up questions:');
-        parsedResponse.follow_up_questions.forEach((question: string, index: number) => {
-          addToHistory('output', `  ${index + 1}. ${question}`);
-        });
-      }
-    } catch (error: any) {
-      console.error('AI request failed:', error);
-      
-      // More detailed error messages
-      if (error.status === 401) {
-        addToHistory('output', '❌ Authentication Error: Please check your OpenRouter API key in the .env file.');
-      } else if (error.status === 429) {
-        addToHistory('output', '❌ Rate Limit Error: Too many requests. Please try again later.');
-      } else if (error.status === 400) {
-        addToHistory('output', '❌ Bad Request: Invalid model or parameters.');
-      } else {
-        addToHistory('output', `❌ Error: ${error.message || 'Unable to process AI request. Please try again.'}`);
-      }
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const fileSystem: Record<string, string> = {
-    'about.md': PERSONAL_DATA.summary,
-    'experience.md': PERSONAL_DATA.experience.map(exp => 
-      `${exp.company} - ${exp.role} (${exp.period})\n${exp.highlights ? exp.highlights.map(h => `• ${h}`).join('\n') : ''}`
-    ).join('\n\n'),
-    'skills.md': PERSONAL_DATA.skills.join('\n'),
-    'contact.md': `Email: ${PERSONAL_DATA.email}\nLinkedIn: ${PERSONAL_DATA.linkedin}\nBlog: ${PERSONAL_DATA.blog}\nTopmate: ${PERSONAL_DATA.topmate}`,
-    'awards.md': PERSONAL_DATA.awards.join('\n'),
-    'education.md': PERSONAL_DATA.education,
-    'README.md': `# ${PERSONAL_DATA.name}\n${PERSONAL_DATA.title}\n\n${PERSONAL_DATA.summary}`
-  };
-
-  const executeCommand = async (cmd: string) => {
-    const [command, ...args] = cmd.trim().split(' ');
-    const argument = args.join(' ');
-
-    addToHistory('input', `${currentPath} $ ${cmd}`);
-
-    switch (command.toLowerCase()) {
-      case 'help':
-        addToHistory('output', 'Available commands:');
-        addToHistory('output', '  Basic Commands:');
-        addToHistory('output', '    help          - Show this help message');
-        addToHistory('output', '    clear         - Clear terminal');
-        addToHistory('output', '    exit          - Close terminal (refresh page)');
-        addToHistory('output', '');
-        addToHistory('output', '  File Operations:');
-        addToHistory('output', '    ls            - List files');
-        addToHistory('output', '    cat <file>    - Display file contents');
-        addToHistory('output', '    head <file>   - Show first 10 lines');
-        addToHistory('output', '    tail <file>   - Show last 10 lines');
-        addToHistory('output', '    wc <file>     - Word count');
-        addToHistory('output', '');
-        addToHistory('output', '  Search & Filter:');
-        addToHistory('output', '    grep <term>   - Search across all files');
-        addToHistory('output', '    find <term>   - Find files containing term');
-        addToHistory('output', '');
-        addToHistory('output', '  System Info:');
-        addToHistory('output', '    whoami        - Show current user');
-        addToHistory('output', '    pwd           - Show current directory');
-        addToHistory('output', '    date          - Show current date/time');
-        addToHistory('output', '    uname         - Show system info');
-        addToHistory('output', '');
-        addToHistory('output', '  Portfolio Commands:');
-        addToHistory('output', '    about         - Show summary');
-        addToHistory('output', '    experience    - Show work experience');
-        addToHistory('output', '    skills        - Show technical skills');
-        addToHistory('output', '    education     - Show educational background');
-        addToHistory('output', '    awards        - Show honors and awards');
-        addToHistory('output', '    contact       - Show contact information');
-        addToHistory('output', '');
-        addToHistory('output', '  AI Assistant:');
-        addToHistory('output', '    /ask [query]  - Ask AI about my background');
-        addToHistory('output', '');
-        addToHistory('output', '  Navigation:');
-        addToHistory('output', '    /portfolio    - Switch to visual portfolio');
-        break;
-
-      case 'about':
-      case 'summary':
-        addToHistory('output', `👨‍💻 ${PERSONAL_DATA.name}`);
-        addToHistory('output', `📍 ${PERSONAL_DATA.location}`);
-        addToHistory('output', '');
-        addToHistory('output', PERSONAL_DATA.summary);
-        break;
-
-      case 'experience':
-      case 'work':
-        addToHistory('output', '💼 Work Experience:');
-        addToHistory('output', '');
-        PERSONAL_DATA.experience.forEach(exp => {
-          addToHistory('output', `🏢 ${exp.company}`);
-          addToHistory('output', `   ${exp.role}`);
-          addToHistory('output', `   ${exp.period}`);
-          if (exp.highlights) {
-            exp.highlights.forEach(highlight => {
-              addToHistory('output', `   • ${highlight}`);
-            });
-          }
-          addToHistory('output', '');
-        });
-        break;
-
-      case 'skills':
-        addToHistory('output', '🛠️  Technical Skills:');
-        addToHistory('output', '');
-        PERSONAL_DATA.skills.forEach(skill => {
-          addToHistory('output', `  ✓ ${skill}`);
-        });
-        break;
-
-      case 'education':
-        addToHistory('output', '🎓 Education:');
-        addToHistory('output', '');
-        addToHistory('output', PERSONAL_DATA.education);
-        break;
-
-      case 'awards':
-        addToHistory('output', '🏆 Honors & Awards:');
-        addToHistory('output', '');
-        PERSONAL_DATA.awards.forEach(award => {
-          addToHistory('output', `  🥇 ${award}`);
-        });
-        break;
-
-      case 'contact':
-        addToHistory('output', '📞 Contact Information:');
-        addToHistory('output', '');
-        addToHistory('output', `📧 Email: ${PERSONAL_DATA.email}`);
-        addToHistory('output', `🔗 LinkedIn: ${PERSONAL_DATA.linkedin}`);
-        addToHistory('output', `📝 Blog: ${PERSONAL_DATA.blog}`);
-        addToHistory('output', `🎯 Topmate: ${PERSONAL_DATA.topmate}`);
-        break;
-
-      case 'clear':
-        setHistory([]);
-        break;
-
-      case 'whoami':
-        addToHistory('output', PERSONAL_DATA.name.toLowerCase().replace(' ', '_'));
-        break;
-
-      case 'pwd':
-        addToHistory('output', `/home/${firstName}/portfolio`);
-        break;
-
-      case '/ask':
-        if (!argument) {
-          addToHistory('output', 'Usage: /ask [your question about my background]');
-          addToHistory('output', 'Example: /ask What is your experience with mobile app development?');
-        } else {
-          await askAI(argument);
-        }
-        break;
-
-      case '/portfolio':
-        addToHistory('output', '🎨 Switching to visual portfolio...');
-        addToHistory('output', '');
-        addToHistory('output', '✨ Redirecting to modern portfolio view');
-        setTimeout(() => {
-          window.location.href = '/portfolio';
-        }, 1500);
-        break;
-
-      case 'ls':
-        if (args.includes('-la') || args.includes('-l')) {
-          addToHistory('output', 'total 7');
-          Object.keys(fileSystem).forEach(file => {
-            const size = fileSystem[file].length.toString().padStart(4);
-            const date = 'Aug  6 12:00';
-            addToHistory('output', `-rw-r--r-- 1 ${firstName} staff ${size} ${date} ${file}`);
-          });
-        } else {
-          const files = Object.keys(fileSystem).join('  ');
-          addToHistory('output', files);
-        }
-        break;
-
-      case 'cat':
-        if (!argument) {
-          addToHistory('output', 'cat: missing file operand');
-        } else if (fileSystem[argument]) {
-          addToHistory('output', fileSystem[argument]);
-        } else {
-          addToHistory('output', `cat: ${argument}: No such file or directory`);
-        }
-        break;
-
-      case 'head':
-        if (!argument) {
-          addToHistory('output', 'head: missing file operand');
-        } else if (fileSystem[argument]) {
-          const lines = fileSystem[argument].split('\n').slice(0, 10);
-          addToHistory('output', lines.join('\n'));
-        } else {
-          addToHistory('output', `head: ${argument}: No such file or directory`);
-        }
-        break;
-
-      case 'tail':
-        if (!argument) {
-          addToHistory('output', 'tail: missing file operand');
-        } else if (fileSystem[argument]) {
-          const lines = fileSystem[argument].split('\n').slice(-10);
-          addToHistory('output', lines.join('\n'));
-        } else {
-          addToHistory('output', `tail: ${argument}: No such file or directory`);
-        }
-        break;
-
-      case 'wc':
-        if (!argument) {
-          addToHistory('output', 'wc: missing file operand');
-        } else if (fileSystem[argument]) {
-          const content = fileSystem[argument];
-          const lines = content.split('\n').length;
-          const words = content.split(/\s+/).filter((w: string) => w.length > 0).length;
-          const chars = content.length;
-          addToHistory('output', `${lines.toString().padStart(8)} ${words.toString().padStart(7)} ${chars.toString().padStart(7)} ${argument}`);
-        } else {
-          addToHistory('output', `wc: ${argument}: No such file or directory`);
-        }
-        break;
-
-      case 'grep':
-        if (!argument) {
-          addToHistory('output', 'grep: missing search term');
-        } else {
-          const searchTerm = argument.toLowerCase();
-          let found = false;
-          Object.entries(fileSystem).forEach(([filename, content]) => {
-            const lines = content.split('\n');
-            lines.forEach((line, index) => {
-              if (line.toLowerCase().includes(searchTerm)) {
-                addToHistory('output', `${filename}:${index + 1}:${line}`);
-                found = true;
-              }
-            });
-          });
-          if (!found) {
-            addToHistory('output', `grep: no matches found for "${argument}"`);
-          }
-        }
-        break;
-
-      case 'find':
-        if (!argument) {
-          addToHistory('output', 'find: missing search term');
-        } else {
-          const searchTerm = argument.toLowerCase();
-          const matchingFiles = Object.keys(fileSystem).filter(filename => 
-            filename.toLowerCase().includes(searchTerm) || 
-            fileSystem[filename].toLowerCase().includes(searchTerm)
-          );
-          if (matchingFiles.length > 0) {
-            matchingFiles.forEach(file => addToHistory('output', `./${file}`));
-          } else {
-            addToHistory('output', `find: no files found containing "${argument}"`);
-          }
-        }
-        break;
-
-      case 'date':
-        addToHistory('output', new Date().toString());
-        break;
-
-      case 'uname':
-        if (args.includes('-a')) {
-          addToHistory('output', `${firstName}OS 1.0.0 Terminal-Portfolio x86_64`);
-        } else {
-          addToHistory('output', `${firstName}OS`);
-        }
-        break;
-
-      case 'history':
-        history.filter(entry => entry.type === 'input').forEach((entry, index) => {
-          addToHistory('output', `${index + 1}  ${entry.content.split('$ ')[1] || entry.content}`);
-        });
-        break;
-
-      case 'echo':
-        addToHistory('output', argument || '');
-        break;
-
-      case 'tree':
-        addToHistory('output', '.');
-        Object.keys(fileSystem).forEach((file, index, arr) => {
-          const isLast = index === arr.length - 1;
-          addToHistory('output', `${isLast ? '└──' : '├──'} ${file}`);
-        });
-        break;
-
-      case 'exit':
-        addToHistory('output', 'logout');
-        addToHistory('output', 'Connection to portfolio closed.');
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
-        break;
-
-      case '':
-        break;
-
-      default:
-        addToHistory('output', `bash: ${command}: command not found`);
-        addToHistory('output', 'Type "help" for available commands');
-        break;
-    }
-    
-    addToHistory('output', '');
-  };
-
-
-
-  const handleClick = () => {
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-  };
+const FadeIn = ({ children, delay = 0, className = "" }: { children: React.ReactNode, delay?: number, className?: string }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const isVisible = useOnScreen(ref, "-50px");
 
   return (
-    <div 
-      className="h-screen bg-black text-green-400 font-mono cursor-text overflow-hidden"
-      onClick={handleClick}
+    <div
+      ref={ref}
+      className={`transition-all duration-700 ease-out transform ${
+        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"
+      } ${className}`}
+      style={{ transitionDelay: `${delay}ms` }}
     >
-      <div className={`w-full ${isMobile ? 'px-2 py-1' : 'px-4 py-2'}`}>
-        {/* Terminal Header */}
-        <div className={`flex items-center justify-between ${isMobile ? 'mb-2' : 'mb-4'} border-b border-green-400 pb-2`}>
-          <div className="flex items-center space-x-2">
-            <div className="flex space-x-1">
-              <div className={`${isMobile ? 'w-2 h-2' : 'w-3 h-3'} bg-red-500 rounded-full`}></div>
-              <div className={`${isMobile ? 'w-2 h-2' : 'w-3 h-3'} bg-yellow-500 rounded-full`}></div>
-              <div className={`${isMobile ? 'w-2 h-2' : 'w-3 h-3'} bg-green-500 rounded-full`}></div>
-            </div>
-            <span className={`text-white ${isMobile ? 'ml-2 text-sm' : 'ml-4'}`}>{firstName}@portfolio:~</span>
-          </div>
-          <div className={`text-green-300 ${isMobile ? 'text-xs' : 'text-sm'}`}>
-            {isMobile ? new Date().toLocaleTimeString() : new Date().toLocaleString()}
-          </div>
-        </div>
-
-        {/* Terminal Content */}
-        <div 
-          ref={historyRef}
-          className="h-[67vh] overflow-y-auto mb-4 space-y-1 text-sm overflow-x-auto"
-          style={{ scrollBehavior: 'smooth' }}
-        >
-          {history.map((entry, index) => (
-            <div key={index} className={`whitespace-pre-wrap ${
-              entry.type === 'input' 
-                ? 'text-white' 
-                : entry.content.includes('🤖') 
-                  ? 'text-blue-400' 
-                  : 'text-green-400'
-            } ${isMobile ? 'text-xs' : 'text-sm'}`}>
-              {entry.content}
-            </div>
-          ))}
-        </div>
-
-        {/* Terminal Input */}
-        <div className="flex items-center">
-          <span className="text-green-300 mr-2">{currentPath} $</span>
-          <input
-            ref={inputRef}
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !isProcessing && input.trim()) {
-                executeCommand(input);
-                setInput('');
-              }
-            }}
-            disabled={isProcessing}
-            className="flex-1 bg-transparent text-green-400 outline-none font-mono"
-            placeholder={isProcessing ? "Processing..." : "Type a command..."}
-            autoFocus
-          />
-          <span className="text-green-400 animate-pulse ml-1">_</span>
-        </div>
-
-        {/* Quick Commands */}
-        <div className={`${isMobile ? 'mt-4 pt-2' : 'mt-6 pt-4'} border-t border-green-900`}>
-          <div className={`text-green-600 ${isMobile ? 'text-xs' : 'text-sm'} mb-2`}>Quick Actions:</div>
-          <div className="flex flex-wrap gap-2 mb-3">
-            {['about', 'experience', 'skills', 'contact', 'awards'].map(cmd => (
-              <button
-                key={cmd}
-                onClick={() => {
-                  setInput(cmd);
-                  executeCommand(cmd);
-                  setInput('');
-                }}
-                disabled={isProcessing}
-                className={`bg-green-900 hover:bg-green-800 text-green-300 ${isMobile ? 'px-2 py-1 text-xs' : 'px-3 py-1 text-sm'} rounded transition-colors disabled:opacity-50`}
-              >
-                {cmd}
-              </button>
-            ))}
-          </div>
-          <div className={`text-green-600 ${isMobile ? 'text-xs' : 'text-sm'} mb-2`}>Shell Commands:</div>
-          <div className="flex flex-wrap gap-2">
-            {['ls -la', 'grep engineer', 'find mobile', 'tree', 'history'].map(cmd => (
-              <button
-                key={cmd}
-                onClick={() => {
-                  setInput(cmd);
-                  executeCommand(cmd);
-                  setInput('');
-                }}
-                disabled={isProcessing}
-                className={`bg-gray-800 hover:bg-gray-700 text-gray-300 ${isMobile ? 'px-2 py-1 text-xs' : 'px-3 py-1 text-sm'} rounded transition-colors disabled:opacity-50`}
-              >
-                {cmd}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* AI Assistant Info */}
-        <div className={`${isMobile ? 'mt-2 p-2' : 'mt-4 p-3'} border border-blue-900 bg-blue-950 bg-opacity-30 rounded`}>
-          <div className={`text-blue-400 ${isMobile ? 'text-xs' : 'text-sm'} mb-1`}>🤖 AI Assistant Available</div>
-          <div className="text-blue-300 text-xs">
-            Use "/ask [your question]" to get AI-powered answers about my background and experience.
-          </div>
-        </div>
-      </div>
+      {children}
     </div>
   );
 };
 
-export default TerminalPortfolio;
+const ChatWidget = ({ personalData }: { personalData: any }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [messages, setMessages] = useState<{role: 'user' | 'assistant', content: string}[]>([
+    { role: 'assistant', content: "Hi! I'm an AI assistant. Ask me anything about Shivendra's background." }
+  ]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isOpen]);
+
+  const handleSend = async () => {
+    if (!input.trim() || isLoading) return;
+
+    const userMessage = input;
+    setInput('');
+    setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+    setIsLoading(true);
+
+    try {
+      const client = new OpenAI({
+        apiKey: import.meta.env.VITE_OPENAI_API_KEY,
+        baseURL: "https://openrouter.ai/api/v1",
+        dangerouslyAllowBrowser: true
+      });
+
+      const systemPrompt = `You are an AI assistant for ${personalData.name}'s portfolio. 
+      Answer questions about their background based on this data: ${JSON.stringify(personalData)}.
+      Keep answers concise, professional, and friendly.`;
+
+      const response = await client.chat.completions.create({
+        model: "openai/gpt-4o-mini",
+        messages: [
+          { role: "system", content: systemPrompt },
+          ...messages.map(m => ({ role: m.role, content: m.content })),
+          { role: "user", content: userMessage }
+        ],
+      });
+
+      const answer = response.choices[0]?.message?.content || "I couldn't generate a response.";
+      setMessages(prev => [...prev, { role: 'assistant', content: answer }]);
+    } catch (error) {
+      setMessages(prev => [...prev, { role: 'assistant', content: "Sorry, I encountered an error. Please try again." }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <>
+      {/* Floating Action Bar */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-4">
+        {/* Chat Window */}
+        {isOpen && (
+          <div className="w-80 md:w-96 bg-white border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col max-h-[500px] mb-2">
+            {/* Header */}
+            <div className="p-4 bg-[#FFE66D] border-b-2 border-black flex justify-between items-center">
+              <h3 className="font-black uppercase tracking-tight">Ask AI Assistant</h3>
+              <button onClick={() => setIsOpen(false)} className="hover:text-[#FF6B6B]">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#F4F4F0] min-h-[300px] max-h-[400px]">
+              {messages.map((msg, idx) => (
+                <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[85%] p-3 text-sm font-medium border-2 border-black ${
+                    msg.role === 'user' 
+                      ? 'bg-black text-white shadow-[2px_2px_0px_0px_rgba(100,100,100,1)]' 
+                      : 'bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
+                  }`}>
+                    {msg.content}
+                  </div>
+                </div>
+              ))}
+              {isLoading && (
+                <div className="flex justify-start">
+                  <div className="bg-white border-2 border-black p-3 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  </div>
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Input */}
+            <div className="p-4 bg-white border-t-2 border-black flex gap-2">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                placeholder="Ask about my experience..."
+                className="flex-1 p-2 border-2 border-black font-mono text-sm focus:outline-none focus:bg-[#E0E7FF]"
+              />
+              <button
+                onClick={handleSend}
+                disabled={isLoading}
+                className="p-2 bg-[#4ECDC4] border-2 border-black hover:bg-[#3dbdb4] disabled:opacity-50 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Action Buttons Group */}
+        <div className="flex shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+          <a 
+            href="/terminal" 
+            className="bg-white hover:bg-[#FF6B6B] text-black hover:text-white border-2 border-black border-r-0 p-3 md:p-4 font-bold font-mono flex items-center gap-2 transition-colors"
+            title="Switch to Terminal Mode"
+          >
+            <Terminal className="w-5 h-5" />
+            <span className="hidden md:inline">DEV_MODE</span>
+          </a>
+          
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className={`text-white border-2 border-black p-3 md:p-4 font-bold font-mono flex items-center gap-2 transition-colors ${
+              isOpen ? 'bg-[#FF6B6B] text-black' : 'bg-black hover:bg-[#4ECDC4] hover:text-black'
+            }`}
+          >
+            {isOpen ? (
+              <>
+                <X className="w-5 h-5" />
+                <span className="hidden md:inline">CLOSE</span>
+              </>
+            ) : (
+              <>
+                <MessageSquare className="w-5 h-5" />
+                <span>ASK AI</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </>
+  );
+};
+
+const Portfolio = () => {
+  const personalData = {
+    name: "Shivendra Soni",
+    title: "ENGINEERING & AI LEADER",
+    currentRole: "Associate Director of AI at HighLevel",
+    location: "Pune, Maharashtra, India",
+    email: "shivendrasoni91@gmail.com",
+    linkedin: "https://linkedin.com/in/shivendrasoni",
+    github: "https://github.com/shivendrasoni",
+    blog: "https://medium.com/@shivendrasoni",
+    topmate: "https://topmate.io/shivendra",
+    summary: "Associate Director of AI at HighLevel, leading a team of around 10 brilliant engineers in AI initiatives. Previously led 35+ engineers at AmberStudent in global student accommodation solutions. Experienced with Phonepe, Flipkart, Mindtickle, SAP Labs. B.Tech from IIIT, passionate about AI, Data Science, LLM development, and fostering collaborative engineering culture. Active researcher in AI transparency and agent identification protocols.",
+    
+    skills: {
+      leadership: ["Team Leadership", "Strategic Thinking", "Technical Design", "Communication", "Mentoring"],
+      technical: ["AI/ML", "LLM Development", "Vector Databases", "System Architecture", "Data Science", "Cloud Computing", "Microservices"],
+      domains: ["FinTech", "E-commerce", "EdTech", "PropTech", "SaaS", "AI Security"],
+    },
+    
+    experience: [
+      {
+        company: "HighLevel",
+        role: "Associate Director of AI",
+        period: "Jan 2025 - Present",
+        location: "India",
+        type: "current",
+        highlights: [
+          "Leading AI initiatives and strategy for the platform",
+          "Building AI-powered marketing automation solutions",
+          "Driving innovation in customer engagement technologies"
+        ]
+      },
+      {
+        company: "Amber (AmberStudent)",
+        role: "Associate Director of Engineering",
+        period: "Apr 2024 - Jan 2025",
+        location: "Pune, India",
+        type: "past",
+        highlights: [
+          "Led AI-first initiatives across the platform",
+          "Built comprehensive performance dashboards",
+          "Managed cross-functional engineering teams",
+          "Drove technical strategy for global expansion"
+        ]
+      },
+      {
+        company: "Amber (AmberStudent)",
+        role: "Senior Software Engineering Manager",
+        period: "Jan 2023 - May 2024",
+        location: "Pune, India", 
+        type: "past",
+        highlights: [
+          "Scaled engineering team from 5 to 40+ members",
+          "Led mobile app development with 200k+ downloads",
+          "Spearheaded China market entry technical initiatives",
+          "Implemented agile processes and engineering best practices"
+        ]
+      },
+      {
+        company: "Previous Experience",
+        role: "Senior Engineering Roles",
+        period: "2014 - 2023",
+        location: "India",
+        type: "past",
+        highlights: [
+          "PhonePe - Led payment processing systems",
+          "Flipkart - E-commerce platform development",
+          "Mindtickle - SaaS platform engineering",
+          "SAP Labs - Enterprise software solutions"
+        ]
+      }
+    ],
+    
+    projects: [
+      {
+        title: "Infrajam.com",
+        company: "SaaS",
+        description: "Architect cloud infrastructure visually with AI. Design diagrams, generate cost estimates, and provision resources via Terraform in a unified, intelligent workflow.",
+        technologies: ["AI", "Terraform", "Cloud Architecture", "Cost Optimization"],
+        impact: "Accelerates infrastructure delivery from design to deployment with AI-driven automation"
+      },
+      {
+        title: "Nuum.online",
+        company: "SaaS",
+        description: "The ultimate command center for social media growth. Research trends, generate high-impact content, and orchestrate multi-channel publishing across Twitter, LinkedIn, and Instagram.",
+        technologies: ["Social Intelligence", "Content AI", "Multi-channel Orchestration"],
+        impact: "Empowers creators to scale their digital presence through data-driven content lifecycles"
+      },
+      {
+        title: "PostOracle.com",
+        company: "SaaS",
+        description: "Put your professional growth on autopilot. An intelligent LinkedIn automation suite that handles networking and engagement while maintaining a human-like presence.",
+        technologies: ["LinkedIn Automation", "Growth Engineering", "AI Engagement"],
+        impact: "Drives consistent professional visibility and network expansion with zero manual effort"
+      },
+      {
+        title: "Vibeward.dev",
+        company: "SaaS",
+        description: "Pioneering 'Vibe Security' for the AI era. A preventive security layer that analyzes and secures the intent of AI-generated code before the first file is even created.",
+        technologies: ["AI Security", "Vibe Coding", "Preventive Analysis", "LLM Safety"],
+        impact: "Establishes a new paradigm of security-by-design for AI-assisted development"
+      },
+      {
+        title: "Medbot (Working Title)",
+        company: "HealthTech",
+        description: "Transform personal health records into actionable insights. Ingests blood work and medical reports into a private RAG pipeline for longitudinal trend analysis and natural language querying.",
+        technologies: ["RAG", "Health Data Science", "Private AI", "Trend Analytics"],
+        impact: "Democratizes personal health data, allowing users to converse with their medical history"
+      },
+      {
+        title: "Vector Cache",
+        company: "Open Source",
+        description: "A streamlined Python library that enhances LLM query performance through semantic caching, making responses faster and more cost-effective.",
+        technologies: ["Python", "LLM", "Semantic Caching", "Vector Databases"],
+        impact: "Reduces LLM costs and response times through semantic similarity caching"
+      },
+      {
+        title: "AI Transparency Markup (AITM)",
+        company: "Self Research",
+        description: "A protocol for AI Agent self-identification in text and voice interactions, promoting transparency in AI communications.",
+        technologies: ["AI/ML", "Protocol Design", "Voice Recognition", "NLP"],
+        impact: "Published research on AI transparency and agent identification"
+      }
+    ],
+    
+    education: {
+      degree: "B.Tech in Information Technology",
+      institution: "Indian Institute of Information Technology",
+      period: "2010-2014",
+      location: "India"
+    },
+    
+    awards: [
+      "First Runners Up - What the Hack 2.0",
+      "Won 1st prize at Go-hack '17 - Gojek",
+      "Intel IoT Roadshow Finalist", 
+      "ET Power of Ideas Top 50",
+      "Won .Net Idea Innovation Challenge - IIT Delhi",
+      "Multi-Dimensional Visual Analytics Patent - US 20170039741"
+    ]
+  };
+
+  return (
+    <div className="min-h-screen bg-[#F4F4F0] text-black font-sans selection:bg-[#FF6B6B] selection:text-white overflow-x-hidden">
+      {/* Hero Section */}
+      <section className="relative min-h-screen flex flex-col justify-center items-center px-4 pt-20 pb-16 border-b-4 border-black bg-[#FFE66D]">
+        {/* Decorative Elements */}
+        <div className="absolute top-20 left-10 w-16 h-16 bg-[#4ECDC4] border-2 border-black rounded-full animate-bounce delay-700 hidden md:block" />
+        <div className="absolute bottom-20 right-10 w-24 h-24 bg-[#FF6B6B] border-2 border-black rotate-12 hidden md:block" />
+        <div className="absolute top-1/3 right-1/4 w-8 h-8 bg-black rotate-45 hidden md:block" />
+        
+        <div className="relative z-10 max-w-5xl mx-auto text-center space-y-8">
+          <FadeIn delay={100}>
+            <div className="inline-block relative">
+              <div className="absolute inset-0 bg-black translate-x-2 translate-y-2 rounded-full"></div>
+              <div className="relative w-40 h-40 rounded-full overflow-hidden border-4 border-black bg-white">
+                <img 
+                  src="https://github.com/shivendrasoni.png" 
+                  alt={personalData.name}
+                  className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-500"
+                />
+              </div>
+            </div>
+          </FadeIn>
+          
+          <FadeIn delay={200}>
+            <h1 className="text-6xl md:text-8xl lg:text-9xl font-black tracking-tighter text-black mb-4 uppercase leading-[0.9]">
+              {personalData.name.split(' ').map((word, i) => (
+                <span key={i} className="block">{word}</span>
+              ))}
+            </h1>
+          </FadeIn>
+
+          <FadeIn delay={300}>
+            <div className="inline-block bg-white border-2 border-black px-6 py-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rotate-[-2deg] hover:rotate-0 transition-transform duration-300">
+              <p className="text-xl md:text-2xl font-bold font-mono tracking-tight">
+                {personalData.title}
+              </p>
+            </div>
+          </FadeIn>
+
+          <FadeIn delay={400}>
+            <p className="text-lg md:text-xl font-medium max-w-2xl mx-auto leading-relaxed mb-8 border-l-4 border-black pl-6 text-left bg-white/50 p-4">
+              {personalData.summary}
+            </p>
+          </FadeIn>
+
+          <FadeIn delay={500}>
+            <div className="flex flex-col items-center gap-12">
+              <div className="flex flex-wrap justify-center gap-4">
+                <Button asChild size="lg" className="bg-black text-white hover:bg-[#4ECDC4] hover:text-black border-2 border-black rounded-none h-14 px-8 text-lg font-bold shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[4px] hover:translate-y-[4px] transition-all duration-200">
+                  <a href={`mailto:${personalData.email}`}>
+                    LET'S TALK <ArrowRight className="ml-2 w-5 h-5" />
+                  </a>
+                </Button>
+                <div className="flex gap-3">
+                  {[
+                    { icon: Linkedin, href: personalData.linkedin, label: "LinkedIn", color: "hover:bg-[#0077b5]" },
+                    { icon: Globe, href: personalData.blog, label: "Blog", color: "hover:bg-[#FF6B6B]" },
+                    { icon: MessageCircle, href: personalData.topmate, label: "Topmate", color: "hover:bg-[#4ECDC4]" }
+                  ].map((social, idx) => (
+                    <a 
+                      key={idx}
+                      href={social.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`p-3 bg-white border-2 border-black text-black ${social.color} hover:text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all duration-200`}
+                      aria-label={social.label}
+                    >
+                      <social.icon className="w-6 h-6" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+
+              {/* Stats Row */}
+              <div className="grid grid-cols-3 gap-4 md:gap-12 w-full max-w-3xl">
+                {[
+                  { label: "YEARS EXP.", value: "10+" },
+                  { label: "ENGINEERS LED", value: "40+" },
+                  { label: "PRODUCTS SCALED", value: "5+" }
+                ].map((stat, idx) => (
+                  <div key={idx} className="bg-white border-2 border-black p-4 text-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                    <div className="text-3xl md:text-4xl font-black mb-1">{stat.value}</div>
+                    <div className="text-xs md:text-sm font-mono font-bold">{stat.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </FadeIn>
+        </div>
+      </section>
+
+      {/* Skills Section */}
+      <section className="py-24 px-4 border-b-4 border-black bg-white">
+        <div className="max-w-6xl mx-auto">
+          <FadeIn>
+            <h2 className="text-5xl md:text-7xl font-black mb-16 text-center uppercase tracking-tighter">
+              Technical <span className="text-[#FF6B6B] underline decoration-4 decoration-black underline-offset-4">Arsenal</span>
+            </h2>
+          </FadeIn>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              { title: "LEADERSHIP", icon: Users, skills: personalData.skills.leadership, bg: "bg-[#FFE66D]" },
+              { title: "TECHNICAL", icon: Code, skills: personalData.skills.technical, bg: "bg-[#4ECDC4]" },
+              { title: "DOMAINS", icon: Globe, skills: personalData.skills.domains, bg: "bg-[#FF6B6B]" }
+            ].map((category, idx) => (
+              <FadeIn key={idx} delay={idx * 100}>
+                <div className="h-full border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[4px] hover:translate-y-[4px] transition-all duration-200 bg-white">
+                  <div className={`p-4 border-b-2 border-black ${category.bg} flex items-center gap-3`}>
+                    <category.icon className="w-6 h-6" />
+                    <h3 className="text-xl font-bold font-mono uppercase">{category.title}</h3>
+                  </div>
+                  <div className="p-6 flex flex-wrap gap-3">
+                    {category.skills.map((skill, sIdx) => (
+                      <span key={sIdx} className="px-3 py-1 text-sm font-bold border-2 border-black bg-white hover:bg-black hover:text-white transition-colors cursor-default shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </FadeIn>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Experience Section */}
+      <section className="py-24 px-4 border-b-4 border-black bg-[#4ECDC4]">
+        <div className="max-w-5xl mx-auto">
+          <FadeIn>
+            <h2 className="text-5xl md:text-7xl font-black mb-20 text-center uppercase tracking-tighter bg-white border-2 border-black inline-block px-8 py-2 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] rotate-1 mx-auto block w-fit">
+              The Journey
+            </h2>
+          </FadeIn>
+
+          <div className="space-y-12">
+            {personalData.experience.map((exp, index) => (
+              <FadeIn key={index} delay={index * 100}>
+                <div className="relative bg-white border-2 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[4px] hover:translate-y-[4px] transition-all duration-200">
+                  <div className="absolute -top-4 -left-4 bg-black text-white px-4 py-1 font-mono font-bold border-2 border-white shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)]">
+                    {exp.period}
+                  </div>
+                  
+                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6 mt-2">
+                    <div>
+                      <h3 className="text-2xl font-black uppercase">{exp.role}</h3>
+                      <div className="flex items-center gap-2 text-lg font-bold mt-1">
+                        <Briefcase className="w-5 h-5" />
+                        <span className="underline decoration-2 underline-offset-2">{exp.company}</span>
+                      </div>
+                    </div>
+                    {exp.type === 'current' && (
+                      <Badge className="bg-[#FF6B6B] text-black border-2 border-black rounded-none px-3 py-1 font-bold animate-pulse">
+                        CURRENT
+                      </Badge>
+                    )}
+                  </div>
+
+                  <ul className="space-y-3">
+                    {exp.highlights.map((highlight, hIdx) => (
+                      <li key={hIdx} className="flex items-start gap-3 text-base font-medium">
+                        <span className="mt-1.5 w-2 h-2 bg-black flex-shrink-0" />
+                        {highlight}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </FadeIn>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Projects Section */}
+      <section className="py-24 px-4 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <FadeIn>
+            <div className="mb-20 text-center">
+              <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter mb-6">
+                Selected <span className="bg-[#FFE66D] px-2">Works</span>
+              </h2>
+              <p className="text-xl font-mono font-bold max-w-2xl mx-auto border-2 border-black p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                Innovation in AI, SaaS, and Infrastructure
+              </p>
+            </div>
+          </FadeIn>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {personalData.projects.map((project, index) => (
+              <FadeIn key={index} delay={index * 50}>
+                <div className="group h-full flex flex-col bg-white border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[4px] hover:translate-y-[4px] transition-all duration-200">
+                  <div className="p-6 border-b-2 border-black bg-slate-50 flex justify-between items-start">
+                    <div className="p-2 bg-black text-white">
+                      <Zap className="w-6 h-6" />
+                    </div>
+                    <Badge variant="outline" className="border-2 border-black rounded-none text-xs font-bold uppercase bg-[#FF6B6B] text-white">
+                      {project.company}
+                    </Badge>
+                  </div>
+                  
+                  <div className="p-6 flex-1 flex flex-col">
+                    <h3 className="text-2xl font-black mb-3 uppercase leading-none">
+                      {project.title}
+                    </h3>
+                    
+                    <p className="text-sm font-medium leading-relaxed mb-6 flex-1">
+                      {project.description}
+                    </p>
+
+                    <div className="space-y-4">
+                      <div className="flex flex-wrap gap-2">
+                        {project.technologies.slice(0, 3).map((tech, tIdx) => (
+                          <span key={tIdx} className="px-2 py-1 text-[10px] font-bold uppercase border border-black bg-[#E0E7FF]">
+                            {tech}
+                          </span>
+                        ))}
+                      </div>
+                      
+                      <div className="pt-4 border-t-2 border-black border-dashed">
+                        <p className="text-xs font-bold flex items-start gap-2">
+                          <TrendingUp className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                          {project.impact}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </FadeIn>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-12 border-t-4 border-black bg-black text-white">
+        <div className="max-w-7xl mx-auto px-4 text-center">
+          <div className="flex flex-col items-center gap-6">
+            <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter">
+              Let's Build <span className="text-[#4ECDC4]">Something</span> Cool
+            </h2>
+            <div className="flex gap-6 mt-4">
+              <a href={`mailto:${personalData.email}`} className="hover:text-[#FF6B6B] transition-colors"><Mail className="w-8 h-8" /></a>
+              <a href={personalData.linkedin} target="_blank" rel="noopener noreferrer" className="hover:text-[#4ECDC4] transition-colors"><Linkedin className="w-8 h-8" /></a>
+              <a href={personalData.github} target="_blank" rel="noopener noreferrer" className="hover:text-[#FFE66D] transition-colors"><Code className="w-8 h-8" /></a>
+            </div>
+            <p className="text-sm font-mono mt-8 text-gray-400">
+              © {new Date().getFullYear()} {personalData.name}. NO COOKIES. JUST CODE.
+            </p>
+          </div>
+        </div>
+      </footer>
+      
+      <ChatWidget personalData={personalData} />
+    </div>
+  );
+};
+
+export default Portfolio;

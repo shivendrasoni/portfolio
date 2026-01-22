@@ -42,7 +42,7 @@ const Home = () => {
                 </span>
               </div>
               <Button asChild className="w-full bg-blue-600 hover:bg-blue-700 text-white">
-                <a href="/portfolio">
+                <a href="/">
                   View Portfolio
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </a>
@@ -72,7 +72,7 @@ const Home = () => {
                 </div>
               </div>
               <Button asChild variant="outline" className="w-full border-green-600 text-green-400 hover:bg-green-600 hover:text-white">
-                <a href="/">
+                <a href="/terminal">
                   Enter Terminal
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </a>
