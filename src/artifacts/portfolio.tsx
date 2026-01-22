@@ -79,6 +79,41 @@ const Portfolio = () => {
     
     projects: [
       {
+        title: "Infrajam.com",
+        company: "SaaS",
+        description: "Architect cloud infrastructure visually with AI. Design diagrams, generate cost estimates, and provision resources via Terraform in a unified, intelligent workflow.",
+        technologies: ["AI", "Terraform", "Cloud Architecture", "Cost Optimization"],
+        impact: "Accelerates infrastructure delivery from design to deployment with AI-driven automation"
+      },
+      {
+        title: "Nuum.online",
+        company: "SaaS",
+        description: "The ultimate command center for social media growth. Research trends, generate high-impact content, and orchestrate multi-channel publishing across Twitter, LinkedIn, and Instagram.",
+        technologies: ["Social Intelligence", "Content AI", "Multi-channel Orchestration"],
+        impact: "Empowers creators to scale their digital presence through data-driven content lifecycles"
+      },
+      {
+        title: "PostOracle.com",
+        company: "SaaS",
+        description: "Put your professional growth on autopilot. An intelligent LinkedIn automation suite that handles networking and engagement while maintaining a human-like presence.",
+        technologies: ["LinkedIn Automation", "Growth Engineering", "AI Engagement"],
+        impact: "Drives consistent professional visibility and network expansion with zero manual effort"
+      },
+      {
+        title: "Vibeward.dev",
+        company: "SaaS",
+        description: "Pioneering 'Vibe Security' for the AI era. A preventive security layer that analyzes and secures the intent of AI-generated code before the first file is even created.",
+        technologies: ["AI Security", "Vibe Coding", "Preventive Analysis", "LLM Safety"],
+        impact: "Establishes a new paradigm of security-by-design for AI-assisted development"
+      },
+      {
+        title: "Medbot (Working Title)",
+        company: "HealthTech",
+        description: "Transform personal health records into actionable insights. Ingests blood work and medical reports into a private RAG pipeline for longitudinal trend analysis and natural language querying.",
+        technologies: ["RAG", "Health Data Science", "Private AI", "Trend Analytics"],
+        impact: "Democratizes personal health data, allowing users to converse with their medical history"
+      },
+      {
         title: "Vector Cache",
         company: "Open Source",
         description: "A streamlined Python library that enhances LLM query performance through semantic caching, making responses faster and more cost-effective.",
@@ -87,31 +122,10 @@ const Portfolio = () => {
       },
       {
         title: "AI Transparency Markup (AITM)",
-        company: "Research",
+        company: "Self Research",
         description: "A protocol for AI Agent self-identification in text and voice interactions, promoting transparency in AI communications.",
         technologies: ["AI/ML", "Protocol Design", "Voice Recognition", "NLP"],
         impact: "Published research on AI transparency and agent identification"
-      },
-      {
-        title: "AI-Powered Marketing Automation",
-        company: "HighLevel",
-        description: "Leading development of intelligent marketing automation features using machine learning to optimize customer engagement and conversion rates.",
-        technologies: ["AI/ML", "Python", "TensorFlow", "AWS", "Microservices"],
-        impact: "Improving customer conversion rates and engagement metrics"
-      },
-      {
-        title: "Global Student Housing Platform",
-        company: "Amber",
-        description: "Built and scaled a comprehensive platform connecting students with accommodation worldwide, serving multiple markets including UK, US, Australia, and China.",
-        technologies: ["React", "Node.js", "PostgreSQL", "AWS", "Docker"],
-        impact: "200k+ mobile app downloads, expanded to 10+ countries"
-      },
-      {
-        title: "Performance Analytics Dashboard",
-        company: "Amber", 
-        description: "Designed and implemented real-time performance dashboards providing insights into business metrics, user behavior, and operational efficiency.",
-        technologies: ["React", "D3.js", "Python", "Apache Kafka", "Redis"],
-        impact: "Enhanced decision-making with real-time business insights"
       }
     ],
     
