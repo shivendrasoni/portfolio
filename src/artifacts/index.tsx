@@ -7,6 +7,7 @@ import {
   Globe, MessageCircle, Terminal, ArrowRight, Mail,
   MessageSquare, X, Send, Loader2
 } from 'lucide-react';
+import DotGrid from '../components/jsrepo/DotGrid';
 
 // Simple hook for intersection observer animations
 const useOnScreen = (ref: React.RefObject<HTMLElement>, rootMargin = '0px') => {
@@ -341,7 +342,22 @@ const Portfolio = () => {
   return (
     <div className="min-h-screen bg-[#F4F4F0] text-black font-sans selection:bg-[#FF6B6B] selection:text-white overflow-x-hidden">
       {/* Hero Section */}
-      <section className="relative min-h-screen flex flex-col justify-center items-center px-4 pt-20 pb-16 border-b-4 border-black bg-[#FFE66D]">
+      <section className="relative min-h-screen flex flex-col justify-center items-center px-4 pt-20 pb-16 border-b-4 border-black bg-[#FFE66D] overflow-hidden">
+        {/* DotGrid Background */}
+        <div className="absolute inset-0 w-full h-full">
+          <DotGrid
+            dotSize={5}
+            gap={70}
+            baseColor="#271E37"
+            activeColor="#5227FF"
+            proximity={120}
+            shockRadius={360}
+            shockStrength={15}
+            resistance={750}
+            returnDuration={5}
+          />
+        </div>
+
         {/* Decorative Elements */}
         <div className="absolute top-20 left-10 w-16 h-16 bg-[#4ECDC4] border-2 border-black rounded-full animate-bounce delay-700 hidden md:block" />
         <div className="absolute bottom-20 right-10 w-24 h-24 bg-[#FF6B6B] border-2 border-black rotate-12 hidden md:block" />
@@ -350,8 +366,8 @@ const Portfolio = () => {
         <div className="relative z-10 max-w-5xl mx-auto text-center space-y-8">
           <FadeIn delay={100}>
             <div className="inline-block relative">
-              <div className="absolute inset-0 bg-black translate-x-2 translate-y-2 rounded-full"></div>
-              <div className="relative w-40 h-40 rounded-full overflow-hidden border-4 border-black bg-white">
+              <div className="absolute inset-0 bg-black translate-x-3 translate-y-3 rounded-full"></div>
+              <div className="relative w-64 h-64 rounded-full overflow-hidden border-4 border-black bg-white">
                 <img 
                   src="https://github.com/shivendrasoni.png" 
                   alt={personalData.name}
