@@ -378,9 +378,36 @@ const Portfolio = () => {
           </FadeIn>
 
           <FadeIn delay={400}>
-            <p className="text-lg md:text-xl font-medium max-w-2xl mx-auto leading-relaxed mb-8 border-l-4 border-black pl-6 text-left bg-white/50 p-4">
-              {personalData.summary}
-            </p>
+            <div className="max-w-3xl mx-auto bg-white border-2 border-black p-6 md:p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] text-left">
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-2 h-2 bg-black mt-2 flex-shrink-0" />
+                  <p className="text-base md:text-lg font-semibold leading-relaxed">
+                    <span className="font-black text-xl">Associate Director of AI at HighLevel</span>, leading a team of around <span className="font-black">10 brilliant engineers</span> in AI initiatives.
+                  </p>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <div className="w-2 h-2 bg-black mt-2 flex-shrink-0" />
+                  <p className="text-base md:text-lg font-medium leading-relaxed">
+                    Previously led <span className="font-bold">35+ engineers at AmberStudent</span> in global student accommodation solutions.
+                  </p>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <div className="w-2 h-2 bg-black mt-2 flex-shrink-0" />
+                  <p className="text-base md:text-lg font-medium leading-relaxed">
+                    Experienced with <span className="font-bold">Phonepe, Flipkart, Mindtickle, SAP Labs</span>. B.Tech from <span className="font-bold">IIIT</span>.
+                  </p>
+                </div>
+                
+                <div className="border-t-2 border-dashed border-black pt-4 mt-4">
+                  <p className="text-sm md:text-base font-medium leading-relaxed text-gray-700">
+                    Passionate about <span className="font-bold text-black">AI, Data Science, LLM development</span>, and fostering collaborative engineering culture. Active researcher in <span className="font-bold text-black">AI transparency and agent identification protocols</span>.
+                  </p>
+                </div>
+              </div>
+            </div>
           </FadeIn>
 
           <FadeIn delay={500}>
