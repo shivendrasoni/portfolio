@@ -360,21 +360,24 @@ const Portfolio = () => {
         company: "SaaS",
         description: "The ultimate command center for social media growth. Research trends, generate high-impact content, and orchestrate multi-channel publishing across Twitter, LinkedIn, and Instagram.",
         technologies: ["Social Intelligence", "Content AI", "Multi-channel Orchestration"],
-        impact: "Empowers creators to scale their digital presence through data-driven content lifecycles"
+        impact: "Empowers creators to scale their digital presence through data-driven content lifecycles",
+        link: "https://nuum.online"
       },
       {
         title: "PostOracle.com",
         company: "SaaS",
         description: "Put your professional growth on autopilot. An intelligent LinkedIn automation suite that handles networking and engagement while maintaining a human-like presence.",
         technologies: ["LinkedIn Automation", "Growth Engineering", "AI Engagement"],
-        impact: "Drives consistent professional visibility and network expansion with zero manual effort"
+        impact: "Drives consistent professional visibility and network expansion with zero manual effort",
+        link: "https://postoracle.com"
       },
       {
         title: "Vibeward.dev",
         company: "SaaS",
         description: "Pioneering 'Vibe Security' for the AI era. A preventive security layer that analyzes and secures the intent of AI-generated code before the first file is even created.",
         technologies: ["AI Security", "Vibe Coding", "Preventive Analysis", "LLM Safety"],
-        impact: "Establishes a new paradigm of security-by-design for AI-assisted development"
+        impact: "Establishes a new paradigm of security-by-design for AI-assisted development",
+        link: "https://vibeward.dev"
       },
       {
         title: "Medbot (Working Title)",
@@ -388,14 +391,16 @@ const Portfolio = () => {
         company: "Open Source",
         description: "A streamlined Python library that enhances LLM query performance through semantic caching, making responses faster and more cost-effective.",
         technologies: ["Python", "LLM", "Semantic Caching", "Vector Databases"],
-        impact: "Reduces LLM costs and response times through semantic similarity caching"
+        impact: "Reduces LLM costs and response times through semantic similarity caching",
+        link: "https://github.com/shivendrasoni/vector-cache"
       },
       {
         title: "AI Transparency Markup (AITM)",
         company: "Self Research",
         description: "A protocol for AI Agent self-identification in text and voice interactions, promoting transparency in AI communications.",
         technologies: ["AI/ML", "Protocol Design", "Voice Recognition", "NLP"],
-        impact: "Published research on AI transparency and agent identification"
+        impact: "Published research on AI transparency and agent identification",
+        link: "https://www.linkedin.com/pulse/ai-transparency-markup-aitm-protocol-agent-text-voice-shivendra-soni-rawef"
       }
     ],
     
@@ -646,8 +651,8 @@ const Portfolio = () => {
           </FadeIn>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {personalData.projects.map((project, index) => (
-              <FadeIn key={index} delay={index * 50}>
+            {personalData.projects.map((project, index) => {
+              const card = (
                 <div className="group h-full flex flex-col bg-white border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[4px] hover:translate-y-[4px] transition-all duration-200">
                   <div className="p-6 border-b-2 border-black bg-slate-50 flex justify-between items-start">
                     <div className="p-2 bg-black text-white">
@@ -685,8 +690,26 @@ const Portfolio = () => {
                     </div>
                   </div>
                 </div>
-              </FadeIn>
-            ))}
+              );
+
+              return (
+                <FadeIn key={index} delay={index * 50}>
+                  {project.link ? (
+                    <a
+                      href={project.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
+                      aria-label={`Open ${project.title}`}
+                    >
+                      {card}
+                    </a>
+                  ) : (
+                    card
+                  )}
+                </FadeIn>
+              );
+            })}
           </div>
         </div>
       </section>
