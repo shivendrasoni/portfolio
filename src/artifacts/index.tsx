@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { OpenAI } from 'openai';
+import { generateChat, generateChatStream, getWebLLMStatus, initWebLLM, onWebLLMStatusChange } from '../lib/webllm';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { 
@@ -56,6 +56,7 @@ const ChatWidget = ({ personalData }: { personalData: any }) => {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [modelStatus, setModelStatus] = useState(getWebLLMStatus());
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -66,38 +67,84 @@ const ChatWidget = ({ personalData }: { personalData: any }) => {
     scrollToBottom();
   }, [messages, isOpen]);
 
+  useEffect(() => {
+    const unsubscribe = onWebLLMStatusChange(setModelStatus);
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (modelStatus.state === 'idle' || modelStatus.state === 'error') {
+      initWebLLM().catch((error) => {
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: `Model failed to load: ${error?.message || 'Unknown error'}`
+        }]);
+      });
+    }
+  }, [isOpen, modelStatus.state]);
+
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
     const userMessage = input;
     setInput('');
-    setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+    const conversation: Array<{ role: 'user' | 'assistant'; content: string }> = [
+      ...messages,
+      { role: 'user', content: userMessage }
+    ];
+    setMessages(prev => [...prev, { role: 'user', content: userMessage }, { role: 'assistant', content: '' }]);
     setIsLoading(true);
 
-    try {
-      const client = new OpenAI({
-        apiKey: import.meta.env.VITE_OPENAI_API_KEY,
-        baseURL: "https://openrouter.ai/api/v1",
-        dangerouslyAllowBrowser: true
+    const updateLastAssistant = (content: string) => {
+      setMessages(prev => {
+        if (prev.length === 0) return prev;
+        const next = [...prev];
+        const lastIndex = next.length - 1;
+        if (next[lastIndex].role === 'assistant') {
+          next[lastIndex] = { ...next[lastIndex], content };
+        }
+        return next;
       });
+    };
 
+    try {
       const systemPrompt = `You are an AI assistant for ${personalData.name}'s portfolio. 
       Answer questions about their background based on this data: ${JSON.stringify(personalData)}.
-      Keep answers concise, professional, and friendly.`;
+      Keep answers concise, professional, and friendly. If the response is long, use short paragraphs,
+      bullet lists, and blank lines between sections for readability.`;
 
-      const response = await client.chat.completions.create({
-        model: "openai/gpt-4o-mini",
-        messages: [
-          { role: "system", content: systemPrompt },
-          ...messages.map(m => ({ role: m.role, content: m.content })),
-          { role: "user", content: userMessage }
-        ],
-      });
+      let answer = "";
+      try {
+        const stream = await generateChatStream({
+          messages: [{ role: "system", content: systemPrompt }, ...conversation],
+          temperature: 0.7,
+        });
 
-      const answer = response.choices[0]?.message?.content || "I couldn't generate a response.";
-      setMessages(prev => [...prev, { role: 'assistant', content: answer }]);
-    } catch (error) {
-      setMessages(prev => [...prev, { role: 'assistant', content: "Sorry, I encountered an error. Please try again." }]);
+        for await (const chunk of stream as AsyncIterable<any>) {
+          const delta = chunk?.choices?.[0]?.delta?.content || "";
+          if (delta) {
+            answer += delta;
+            updateLastAssistant(answer);
+          }
+        }
+      } catch (streamError) {
+        const response = await generateChat({
+          messages: [{ role: "system", content: systemPrompt }, ...conversation],
+          temperature: 0.7,
+        });
+
+        answer = response.choices[0]?.message?.content || "I couldn't generate a response.";
+        updateLastAssistant(answer);
+      }
+
+      if (!answer.trim()) {
+        updateLastAssistant("I couldn't generate a response.");
+      }
+    } catch (error: any) {
+      updateLastAssistant(error?.message || "Sorry, I encountered an error. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -126,7 +173,7 @@ const ChatWidget = ({ personalData }: { personalData: any }) => {
                     msg.role === 'user' 
                       ? 'bg-black text-white shadow-[2px_2px_0px_0px_rgba(100,100,100,1)]' 
                       : 'bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
-                  }`}>
+                  } whitespace-pre-wrap`}>
                     {msg.content}
                   </div>
                 </div>

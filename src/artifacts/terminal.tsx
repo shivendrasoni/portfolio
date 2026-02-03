@@ -1,17 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { OpenAI } from 'openai';
+import { generateChat, generateChatStream, initWebLLM } from '../lib/webllm';
 
 // Type definitions
 interface HistoryEntry {
   type: 'input' | 'output';
   content: string;
-}
-
-interface AIResponse {
-  answer: string;
-  confidence: 'high' | 'medium' | 'low';
-  sources_used: string[];
-  follow_up_questions?: string[];
 }
 
 // Personal Data Constants
@@ -176,6 +169,12 @@ const TerminalPortfolio = () => {
   }, [history]);
 
   useEffect(() => {
+    initWebLLM().catch((error) => {
+      addToHistory('output', `❌ Model load failed: ${error?.message || 'Unknown error'}`);
+    });
+  }, []);
+
+  useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus();
     }
@@ -185,35 +184,28 @@ const TerminalPortfolio = () => {
     setHistory(prev => [...prev, { type, content }]);
   };
 
+  const updateLastOutput = (content: string) => {
+    setHistory(prev => {
+      const next = [...prev];
+      for (let i = next.length - 1; i >= 0; i -= 1) {
+        if (next[i].type === 'output') {
+          next[i] = { ...next[i], content };
+          break;
+        }
+      }
+      return next;
+    });
+  };
+
   const askAI = async (question: string) => {
     setIsProcessing(true);
-    addToHistory('output', 'AI Assistant is thinking...');
+    addToHistory('output', '🤖 AI Response:');
+    addToHistory('output', '');
   
     try {
-              const client = new OpenAI({
-          apiKey: import.meta.env.VITE_OPENAI_API_KEY,
-          baseURL: "https://openrouter.ai/api/v1",
-          dangerouslyAllowBrowser: true
-        });
-      
       const systemPrompt = `You are an AI assistant helping answer questions about ${PERSONAL_DATA.name}'s professional background. 
-  
-  You must respond in valid JSON format with this exact structure:
-  {
-  "answer": "Your detailed response here",
-  "confidence": "high|medium|low",
-  "sources_used": ["resume_data", "web_search"],
-  "follow_up_questions": ["Optional follow-up question 1", "Optional follow-up question 2"]
-  }
-  
-  Guidelines:
-  - Use "high" confidence for information directly from resume data
-  - Use "medium" confidence for reasonable inferences
-  - Use "low" confidence when information is limited
-  - Include "resume_data" in sources_used when using provided data
-  - Include "web_search" in sources_used if you need to search (but note: actual web search may be limited)
-  - Provide 1-3 relevant follow-up questions when appropriate
-  - Keep the answer concise but informative`;
+  Keep answers concise, professional, and friendly. If the response is long, use short paragraphs,
+  bullet lists, and blank lines between sections for readability.`;
   
       const userPrompt = `Here's ${PERSONAL_DATA.name}'s resume data:
   
@@ -235,58 +227,52 @@ const TerminalPortfolio = () => {
   
   Question: ${question}`;
   
-      const response = await client.chat.completions.create({
-        model: "openai/gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: systemPrompt
-          },
-          {
-            role: "user",
-            content: userPrompt
-          }
-        ],
-        max_tokens: 800,
-        temperature: 0.7,
-        response_format: { type: "json_object" }
-      });
-  
-      const rawResponse = response.choices[0]?.message?.content || "{}";
-      
-      // Parse the structured response
-      let parsedResponse: AIResponse;
+      let answer = "";
       try {
-        parsedResponse = JSON.parse(rawResponse) as AIResponse;
-      } catch (parseError) {
-        console.error('Failed to parse AI response:', parseError);
-        parsedResponse = {
-          answer: rawResponse || "No response received",
-          confidence: "low",
-          sources_used: ["resume_data"]
-        };
-      }
-      
-      // Display the formatted response
-      addToHistory('output', '🤖 AI Response:');
-      addToHistory('output', parsedResponse.answer);
-      
-      // Add confidence indicator
-      const confidenceEmoji = parsedResponse.confidence === 'high' ? '🟢' : 
-                             parsedResponse.confidence === 'medium' ? '🟡' : '🔴';
-      addToHistory('output', `\n${confidenceEmoji} Confidence: ${parsedResponse.confidence.toUpperCase()}`);
-      
-      // Add sources used
-      if (parsedResponse.sources_used && parsedResponse.sources_used.length > 0) {
-        addToHistory('output', `📚 Sources: ${parsedResponse.sources_used.join(', ')}`);
-      }
-      
-      // Add follow-up questions if available
-      if (parsedResponse.follow_up_questions && parsedResponse.follow_up_questions.length > 0) {
-        addToHistory('output', '\n💡 Follow-up questions:');
-        parsedResponse.follow_up_questions.forEach((question: string, index: number) => {
-          addToHistory('output', `  ${index + 1}. ${question}`);
+        const stream = await generateChatStream({
+          messages: [
+            {
+              role: "system",
+              content: systemPrompt
+            },
+            {
+              role: "user",
+              content: userPrompt
+            }
+          ],
+          max_tokens: 800,
+          temperature: 0.7,
         });
+
+        for await (const chunk of stream as AsyncIterable<any>) {
+          const delta = chunk?.choices?.[0]?.delta?.content || "";
+          if (delta) {
+            answer += delta;
+            updateLastOutput(answer);
+          }
+        }
+      } catch (streamError) {
+        const response = await generateChat({
+          messages: [
+            {
+              role: "system",
+              content: systemPrompt
+            },
+            {
+              role: "user",
+              content: userPrompt
+            }
+          ],
+          max_tokens: 800,
+          temperature: 0.7,
+        });
+
+        answer = response.choices[0]?.message?.content || "No response received";
+        updateLastOutput(answer);
+      }
+
+      if (!answer.trim()) {
+        updateLastOutput("No response received");
       }
     } catch (error: any) {
       console.error('AI request failed:', error);
