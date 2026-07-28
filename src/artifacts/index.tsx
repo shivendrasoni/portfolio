@@ -2,10 +2,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import { generateChat, generateChatStream, getWebLLMStatus, initWebLLM, onWebLLMStatusChange } from '../lib/webllm';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
-import { 
-  Linkedin, Briefcase, Code, Zap, Users, TrendingUp, 
+import {
+  Linkedin, Briefcase, Code, Zap, Users, TrendingUp,
   Globe, MessageCircle, Terminal, ArrowRight, Mail,
-  MessageSquare, X, Send, Loader2
+  MessageSquare, X, Send, Loader2, Github, Instagram
 } from 'lucide-react';
 import DotGrid from '../components/jsrepo/DotGrid';
 
@@ -256,6 +256,35 @@ const ChatWidget = ({ personalData }: { personalData: any }) => {
     </>
   );
 };
+
+const SOCIAL_LINKS = [
+  { icon: Github, href: 'https://github.com/shivendrasoni', label: 'GitHub', hoverClass: 'hover:bg-black hover:text-white' },
+  { icon: Linkedin, href: 'https://linkedin.com/in/shivendrasoni', label: 'LinkedIn', hoverClass: 'hover:bg-[#0077b5] hover:text-white' },
+  { icon: X, href: 'https://x.com/oyegpt', label: 'X (Twitter)', hoverClass: 'hover:bg-black hover:text-white' },
+  { icon: Instagram, href: 'https://instagram.com/oyegpt', label: 'Instagram', hoverClass: 'hover:bg-gradient-to-br hover:from-[#f09433] hover:via-[#dc2743] hover:to-[#bc1888] hover:text-white' },
+  { icon: Globe, href: 'https://medium.com/@shivendrasoni', label: 'Blog', hoverClass: 'hover:bg-[#FF6B6B] hover:text-white' },
+  { icon: MessageCircle, href: 'https://topmate.io/shivendra', label: 'Topmate', hoverClass: 'hover:bg-[#4ECDC4] hover:text-white' },
+];
+
+const SocialRail = () => (
+  <div className="fixed left-4 md:left-6 top-1/2 -translate-y-1/2 z-40 hidden md:flex">
+    <div className="flex flex-col shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+      {SOCIAL_LINKS.map((social, idx) => (
+        <a
+          key={social.label}
+          href={social.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={social.label}
+          title={social.label}
+          className={`p-3 bg-white border-2 border-black text-black transition-colors duration-200 ${idx !== 0 ? 'border-t-0' : ''} ${social.hoverClass}`}
+        >
+          <social.icon className="w-5 h-5" />
+        </a>
+      ))}
+    </div>
+  </div>
+);
 
 const Portfolio = () => {
   useEffect(() => {
@@ -516,24 +545,6 @@ const Portfolio = () => {
                     LET'S TALK <ArrowRight className="ml-2 w-5 h-5" />
                   </a>
                 </Button>
-                <div className="flex gap-3">
-                  {[
-                    { icon: Linkedin, href: personalData.linkedin, label: "LinkedIn", color: "hover:bg-[#0077b5]" },
-                    { icon: Globe, href: personalData.blog, label: "Blog", color: "hover:bg-[#FF6B6B]" },
-                    { icon: MessageCircle, href: personalData.topmate, label: "Topmate", color: "hover:bg-[#4ECDC4]" }
-                  ].map((social, idx) => (
-                    <a 
-                      key={idx}
-                      href={social.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`p-3 bg-white border-2 border-black text-black ${social.color} hover:text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] transition-all duration-200`}
-                      aria-label={social.label}
-                    >
-                      <social.icon className="w-6 h-6" />
-                    </a>
-                  ))}
-                </div>
               </div>
 
               {/* Stats Row */}
@@ -733,6 +744,7 @@ const Portfolio = () => {
         </div>
       </footer>
       
+      <SocialRail />
       <ChatWidget personalData={personalData} />
     </div>
   );
