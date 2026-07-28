@@ -244,7 +244,7 @@ const TerminalPortfolio = () => {
           temperature: 0.7,
         });
 
-        for await (const chunk of stream as AsyncIterable<any>) {
+        for await (const chunk of stream) {
           const delta = chunk?.choices?.[0]?.delta?.content || "";
           if (delta) {
             answer += delta;
@@ -274,18 +274,23 @@ const TerminalPortfolio = () => {
       if (!answer.trim()) {
         updateLastOutput("No response received");
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('AI request failed:', error);
-      
+
+      const status = typeof error === 'object' && error !== null && 'status' in error
+        ? (error as { status?: unknown }).status
+        : undefined;
+      const message = error instanceof Error ? error.message : undefined;
+
       // More detailed error messages
-      if (error.status === 401) {
+      if (status === 401) {
         addToHistory('output', '❌ Authentication Error: Please check your OpenRouter API key in the .env file.');
-      } else if (error.status === 429) {
+      } else if (status === 429) {
         addToHistory('output', '❌ Rate Limit Error: Too many requests. Please try again later.');
-      } else if (error.status === 400) {
+      } else if (status === 400) {
         addToHistory('output', '❌ Bad Request: Invalid model or parameters.');
       } else {
-        addToHistory('output', `❌ Error: ${error.message || 'Unable to process AI request. Please try again.'}`);
+        addToHistory('output', `❌ Error: ${message || 'Unable to process AI request. Please try again.'}`);
       }
     } finally {
       setIsProcessing(false);

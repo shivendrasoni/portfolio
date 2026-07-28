@@ -49,7 +49,12 @@ const FadeIn = ({ children, delay = 0, className = "" }: { children: React.React
   );
 };
 
-const ChatWidget = ({ personalData }: { personalData: any }) => {
+interface ChatPersonalData {
+  name: string;
+  [key: string]: unknown;
+}
+
+const ChatWidget = ({ personalData }: { personalData: ChatPersonalData }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [hasOpened, setHasOpened] = useState(false);
   const [messages, setMessages] = useState<{role: 'user' | 'assistant', content: string}[]>([
@@ -129,7 +134,7 @@ const ChatWidget = ({ personalData }: { personalData: any }) => {
           temperature: 0.7,
         });
 
-        for await (const chunk of stream as AsyncIterable<any>) {
+        for await (const chunk of stream) {
           const delta = chunk?.choices?.[0]?.delta?.content || "";
           if (delta) {
             answer += delta;
@@ -149,8 +154,9 @@ const ChatWidget = ({ personalData }: { personalData: any }) => {
       if (!answer.trim()) {
         updateLastAssistant("I couldn't generate a response.");
       }
-    } catch (error: any) {
-      updateLastAssistant(error?.message || "Sorry, I encountered an error. Please try again.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Sorry, I encountered an error. Please try again.";
+      updateLastAssistant(message);
     } finally {
       setIsLoading(false);
     }

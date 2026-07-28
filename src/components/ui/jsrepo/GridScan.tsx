@@ -407,15 +407,20 @@ export const GridScan: React.FC<GridScanProps> = ({
     const onClick = async () => {
       const nowSec = performance.now() / 1000;
       if (scanOnClick) pushScan(nowSec);
+      const deviceOrientationEvent = window.DeviceOrientationEvent as
+        | (typeof DeviceOrientationEvent & { requestPermission?: () => Promise<'granted' | 'denied'> })
+        | undefined;
       if (
         enableGyro &&
         typeof window !== 'undefined' &&
-        (window as any).DeviceOrientationEvent &&
-        (DeviceOrientationEvent as any).requestPermission
+        deviceOrientationEvent &&
+        typeof deviceOrientationEvent.requestPermission === 'function'
       ) {
         try {
-          await (DeviceOrientationEvent as any).requestPermission();
-        } catch {}
+          await deviceOrientationEvent.requestPermission();
+        } catch (error) {
+          console.error('Device orientation permission request failed', error);
+        }
       }
     };
     const onEnter = () => {
@@ -599,6 +604,9 @@ export const GridScan: React.FC<GridScanProps> = ({
       renderer.dispose();
       container.removeChild(renderer.domElement);
     };
+    // Bloom/scan/noise uniforms are synced live via the materialRef/bloomRef effect below;
+    // re-running this effect for them would tear down and rebuild the renderer.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     sensitivity,
     lineThickness,
@@ -609,7 +617,13 @@ export const GridScan: React.FC<GridScanProps> = ({
     lineStyle,
     lineJitter,
     scanDirection,
-    enablePost
+    enablePost,
+    skewScale,
+    tiltScale,
+    yawScale,
+    smoothTime,
+    maxSpeed,
+    yBoost
   ]);
 
   useEffect(() => {
@@ -634,8 +648,8 @@ export const GridScan: React.FC<GridScanProps> = ({
     }
     if (bloomRef.current) {
       bloomRef.current.blendMode.opacity.value = Math.max(0, bloomIntensity);
-      (bloomRef.current as any).luminanceMaterial.threshold = bloomThreshold;
-      (bloomRef.current as any).luminanceMaterial.smoothing = bloomSmoothing;
+      bloomRef.current.luminanceMaterial.threshold = bloomThreshold;
+      bloomRef.current.luminanceMaterial.smoothing = bloomSmoothing;
     }
     if (chromaRef.current) {
       chromaRef.current.offset.set(chromaticAberration, chromaticAberration);
@@ -700,11 +714,10 @@ export const GridScan: React.FC<GridScanProps> = ({
   useEffect(() => {
     let stop = false;
     let lastDetect = 0;
+    const video = videoRef.current;
 
     const start = async () => {
-      if (!enableWebcam || !modelsReady) return;
-      const video = videoRef.current;
-      if (!video) return;
+      if (!enableWebcam || !modelsReady || !video) return;
 
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -778,7 +791,8 @@ export const GridScan: React.FC<GridScanProps> = ({
         }
 
         if ('requestVideoFrameCallback' in HTMLVideoElement.prototype) {
-          (video as any).requestVideoFrameCallback(() => detect(performance.now()));
+          (video as HTMLVideoElement & { requestVideoFrameCallback: (callback: () => void) => number })
+            .requestVideoFrameCallback(() => detect(performance.now()));
         } else {
           requestAnimationFrame(detect);
         }
@@ -791,7 +805,6 @@ export const GridScan: React.FC<GridScanProps> = ({
 
     return () => {
       stop = true;
-      const video = videoRef.current;
       if (video) {
         const stream = video.srcObject as MediaStream | null;
         if (stream) stream.getTracks().forEach(t => t.stop());
@@ -840,7 +853,7 @@ function smoothDampVec2(
   const x = omega * deltaTime;
   const exp = 1 / (1 + x + 0.48 * x * x + 0.235 * x * x * x);
 
-  let change = current.clone().sub(target);
+  const change = current.clone().sub(target);
   const originalTo = target.clone();
 
   const maxChange = maxSpeed * smoothTime;
