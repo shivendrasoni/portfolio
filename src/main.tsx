@@ -1,15 +1,18 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { RouterProvider, createBrowserRouter } from 'react-router-dom';
+import { Navigate, RouterProvider, createBrowserRouter } from 'react-router-dom';
 import routes from 'virtual:generated-pages-react';
 import Layout from './components/layout';
 import './index.css';
 
 const router = createBrowserRouter(
-  routes.map((route) => ({
-    ...route,
-    element: <Layout>{route.element}</Layout>,
-  })), {
+  [
+    ...routes.map((route) => ({
+      ...route,
+      element: <Layout>{route.element}</Layout>,
+    })),
+    { path: '*', element: <Navigate to="/" replace /> },
+  ], {
   future: {
     v7_relativeSplatPath: true,
     v7_fetcherPersist: true,

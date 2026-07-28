@@ -51,6 +51,7 @@ const FadeIn = ({ children, delay = 0, className = "" }: { children: React.React
 
 const ChatWidget = ({ personalData }: { personalData: any }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [hasOpened, setHasOpened] = useState(false);
   const [messages, setMessages] = useState<{role: 'user' | 'assistant', content: string}[]>([
     { role: 'assistant', content: "Hi! I'm an AI assistant. Ask me anything about Shivendra's background." }
   ]);
@@ -66,6 +67,10 @@ const ChatWidget = ({ personalData }: { personalData: any }) => {
   useEffect(() => {
     scrollToBottom();
   }, [messages, isOpen]);
+
+  useEffect(() => {
+    if (isOpen) setHasOpened(true);
+  }, [isOpen]);
 
   useEffect(() => {
     const unsubscribe = onWebLLMStatusChange(setModelStatus);
@@ -156,8 +161,11 @@ const ChatWidget = ({ personalData }: { personalData: any }) => {
       {/* Floating Action Bar */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-4">
         {/* Chat Window */}
-        {isOpen && (
-          <div className="w-80 md:w-96 bg-white border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col max-h-[500px] mb-2">
+        {hasOpened && (
+          <div
+            data-state={isOpen ? 'open' : 'closed'}
+            className={`w-80 md:w-96 bg-white border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col max-h-[500px] mb-2 origin-bottom-right duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95 ${!isOpen ? 'pointer-events-none' : ''}`}
+          >
             {/* Header */}
             <div className="p-4 bg-[#FFE66D] border-b-2 border-black flex justify-between items-center">
               <h3 className="font-black uppercase tracking-tight">Ask AI Assistant</h3>
@@ -180,10 +188,10 @@ const ChatWidget = ({ personalData }: { personalData: any }) => {
                 </div>
               )}
               {messages.map((msg, idx) => (
-                <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div key={idx} className={`flex animate-in fade-in-0 slide-in-from-bottom-1 duration-150 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[85%] p-3 text-sm font-medium border-2 border-black ${
-                    msg.role === 'user' 
-                      ? 'bg-black text-white shadow-[2px_2px_0px_0px_rgba(100,100,100,1)]' 
+                    msg.role === 'user'
+                      ? 'bg-black text-white shadow-[2px_2px_0px_0px_rgba(100,100,100,1)]'
                       : 'bg-white text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
                   } whitespace-pre-wrap`}>
                     {msg.content}
