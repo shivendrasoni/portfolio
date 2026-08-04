@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { Navigate, RouterProvider, createBrowserRouter } from 'react-router-dom';
 import routes from 'virtual:generated-pages-react';
 import Layout from './components/layout';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import './index.css';
 
 const router = createBrowserRouter(
@@ -25,5 +26,6 @@ const router = createBrowserRouter(
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <RouterProvider router={router} />
+    <SpeedInsights />
   </React.StrictMode>,
 );
