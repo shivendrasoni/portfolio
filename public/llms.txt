@@ -73,6 +73,9 @@ adoption in production, and how engineering organisations should build with AI.
   and engagement that keeps a human-like presence.
 - [Vector Cache](https://github.com/shivendrasoni/vector-cache): open-source Python library that
   speeds up LLM queries through semantic caching, cutting latency and token cost.
+- [TokenArcade](https://github.com/shivendrasoni/tokenarcade): native macOS content break that
+  opens a game or curated reading card while Claude Code or Codex works a long turn, driven by
+  lifecycle hooks and retaining no prompts or transcripts.
 - [AITM Protocol](https://www.linkedin.com/pulse/ai-transparency-markup-aitm-protocol-agent-text-voice-shivendra-soni-rawef):
   AI Transparency Markup, a protocol for AI agent self-identification in text and voice.
 - Medbot (in progress): turns personal health records into insight through a private RAG

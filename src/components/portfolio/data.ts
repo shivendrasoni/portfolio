@@ -1,6 +1,6 @@
 import {
   Cloud, TrendingUp, Linkedin, ShieldCheck, Database, BadgeCheck, HeartPulse,
-  BrainCircuit, Bot, Terminal, Code2, GitBranch, Cpu, Server, Workflow, Boxes,
+  BrainCircuit, Bot, Terminal, Gamepad2, Code2, GitBranch, Cpu, Server, Workflow, Boxes,
   Container, Zap, Layers, Braces, Github, X, Instagram, BookOpen, MessageCircle,
   type LucideIcon,
 } from 'lucide-react';
@@ -106,6 +106,15 @@ export const PROJECTS: Project[] = [
       'A streamlined Python library that speeds up LLM queries through semantic caching — faster responses at a fraction of the token cost.',
     tech: ['Python', 'LLM', 'Semantic Caching', 'Vector DBs'],
     href: 'https://github.com/shivendrasoni/vector-cache',
+  },
+  {
+    name: 'TokenArcade',
+    tag: 'Open Source',
+    icon: Gamepad2,
+    description:
+      'A native macOS content break for agentic coding. Lifecycle hooks from Claude Code and Codex open a game or a curated reading card while a long turn runs, then close it when work completes — hook metadata only, no prompts or transcripts retained.',
+    tech: ['SwiftUI', 'Swift 6', 'WebKit', 'Agent Hooks'],
+    href: 'https://github.com/shivendrasoni/tokenarcade',
   },
   {
     name: 'AITM Protocol',
