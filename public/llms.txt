@@ -25,8 +25,9 @@
   and open-source LLM tooling used by other developers.
 - Coaches and mentors engineers and engineering leaders 1:1 via Topmate, and writes about AI
   and engineering leadership on Medium.
-- Invited panelist at Indian industry AI events, including AI Power Shift 2026, an AWS
-  re:Invent event in Pune, an AI leadership panel in Bangalore, and a Searce event in Mumbai.
+- Invited panelist at Indian industry AI events, including AI Power Shift 2026, the FAIR
+  (Festival of AI and Robotics) Technology Conference 2026 in Bangalore, an AWS re:Invent
+  event in Pune, and a Searce event in Mumbai.
 - Award record: First Runners Up at What the Hack 2.0; 1st prize at Go-hack '17 (Gojek);
   Intel IoT Roadshow finalist; ET Power of Ideas Top 50; winner of the .Net Idea Innovation
   Challenge at IIT Delhi.
@@ -39,7 +40,7 @@ adoption in production, and how engineering organisations should build with AI.
 
 - AI Power Shift 2026 — panelist.
 - AWS re:Invent, Pune — panelist.
-- AI industry panel, Bangalore (The Leela Palace) — panelist.
+- FAIR (Festival of AI and Robotics) Technology Conference 2026, Bangalore — panelist.
 - Searce industry event, Mumbai — panelist.
 
 ## Areas of expertise
