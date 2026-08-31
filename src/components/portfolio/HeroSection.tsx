@@ -1,12 +1,17 @@
 import React from 'react';
 import { ArrowUpRight, MessageSquare, Sparkle } from 'lucide-react';
-import { CardVideo, MarqueeRow, SectionLabel } from './primitives';
-import { LINKS, PROFILE, SOCIALS, STACK_ICONS, TIMELINE, VIDEOS } from './data';
+import { CardBackdrop, MarqueeRow, SectionLabel } from './primitives';
+import { LINKS, PROFILE, SOCIALS, STACK_ICONS, TIMELINE } from './data';
 
 const BackgroundCard = () => (
   <article className="relative min-h-[460px] overflow-hidden rounded-2xl bg-black lg:min-h-0">
-    <CardVideo src={VIDEOS.background} />
-    <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/10 to-black/85" />
+    <CardBackdrop variant="aurora" />
+    <img
+      src="/portrait.webp"
+      alt={`${PROFILE.name}, ${PROFILE.currentRole}`}
+      className="absolute bottom-0 left-1/2 h-[80%] w-auto -translate-x-1/2 object-contain opacity-95 [mask-image:linear-gradient(to_bottom,black_46%,transparent_84%)]"
+    />
+    <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(0,0,0,0.45)_0%,rgba(0,0,0,0)_28%,rgba(0,0,0,0.6)_60%,rgba(0,0,0,0.94)_100%)]" />
     <div className="relative flex h-full flex-col justify-between p-5 md:p-6">
       <SectionLabel>Background</SectionLabel>
       <div className="grid grid-cols-[auto_auto_1fr_auto] items-start gap-x-3 gap-y-3 text-[13px]">
@@ -37,7 +42,7 @@ const StatementCard = () => (
 
 const StatCard = () => (
   <article className="relative min-h-[220px] overflow-hidden rounded-2xl bg-black">
-    <CardVideo src={VIDEOS.stat} />
+    <CardBackdrop variant="pulse" />
     <div className="absolute inset-0 bg-black/25" />
     <div className="relative flex h-full flex-col items-center justify-center gap-3 p-5 md:p-6">
       <span className="text-5xl font-light tracking-tight drop-shadow-[0_2px_18px_rgba(0,0,0,0.55)] sm:text-6xl md:text-7xl lg:text-[80px]">
@@ -52,7 +57,7 @@ const StatCard = () => (
 
 const StackCard = () => (
   <article className="relative min-h-[260px] overflow-hidden rounded-2xl bg-black">
-    <CardVideo src={VIDEOS.stack} />
+    <CardBackdrop variant="grid" />
     <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/10 to-black/70" />
     <div className="relative flex h-full flex-col justify-between gap-6 p-5 md:p-6">
       <SectionLabel>Daily Stack</SectionLabel>

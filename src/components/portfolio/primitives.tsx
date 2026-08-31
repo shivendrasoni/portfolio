@@ -1,15 +1,49 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Sparkle } from 'lucide-react';
 
-export const CardVideo = ({ src }: { src: string }) => (
-  <video
-    className="absolute inset-0 h-full w-full object-cover"
-    src={src}
-    autoPlay
-    loop
-    muted
-    playsInline
-  />
+export type BackdropVariant = 'aurora' | 'pulse' | 'grid';
+
+const AuroraLayers = () => (
+  <>
+    <div className="absolute left-[-15%] top-[-20%] h-[75%] w-[85%] animate-drift-a rounded-full bg-[radial-gradient(circle_at_center,rgba(62,166,150,0.8),transparent_66%)]" />
+    <div className="absolute bottom-[-25%] right-[-20%] h-[80%] w-[80%] animate-drift-b rounded-full bg-[radial-gradient(circle_at_center,rgba(44,92,150,0.72),transparent_66%)]" />
+    <div className="absolute bottom-[8%] left-[18%] h-[55%] w-[55%] animate-drift-c rounded-full bg-[radial-gradient(circle_at_center,rgba(176,120,64,0.45),transparent_68%)]" />
+  </>
+);
+
+const PULSE_RINGS = [0, 1, 2];
+
+const PulseLayers = () => (
+  <>
+    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(52,126,116,0.42),transparent_62%)]" />
+    {PULSE_RINGS.map((ring) => (
+      <div
+        key={ring}
+        className="absolute left-1/2 top-1/2 h-[340px] w-[340px] animate-ring-pulse rounded-full border border-white/25"
+        style={{ animationDelay: `${ring * 2.33}s` }}
+      />
+    ))}
+  </>
+);
+
+const GridLayers = () => (
+  <>
+    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_120%,rgba(44,110,104,0.45),transparent_65%)]" />
+    <div className="absolute inset-0 [perspective:420px]">
+      <div className="absolute inset-[-40%] [transform:rotateX(62deg)]">
+        <div className="backdrop-grid animate-grid-drift absolute inset-0" />
+      </div>
+    </div>
+    <div className="absolute inset-x-0 top-0 h-16 animate-scan-sweep bg-[linear-gradient(to_bottom,transparent,rgba(170,236,224,0.16),transparent)]" />
+  </>
+);
+
+export const CardBackdrop = ({ variant }: { variant: BackdropVariant }) => (
+  <div className="noise-overlay absolute inset-0 overflow-hidden bg-[#05080a]" aria-hidden="true">
+    {variant === 'aurora' ? <AuroraLayers /> : null}
+    {variant === 'pulse' ? <PulseLayers /> : null}
+    {variant === 'grid' ? <GridLayers /> : null}
+  </div>
 );
 
 export const SectionLabel = ({
