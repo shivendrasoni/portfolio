@@ -149,9 +149,12 @@ export async function loadPosts(root: string, includeDrafts: boolean): Promise<B
   const dir = path.join(root, CONTENT_DIR);
   if (!fs.existsSync(dir)) return [];
 
+  // README.md documents the directory and an underscore prefix is the usual
+  // "not a post" marker. Neither is content, and neither should be parsed as a
+  // post or fail the build for having no frontmatter.
   const files = fs
     .readdirSync(dir)
-    .filter((name) => name.endsWith('.md'))
+    .filter((name) => name.endsWith('.md') && name !== 'README.md' && !name.startsWith('_'))
     .sort();
 
   const posts: BlogPost[] = [];
