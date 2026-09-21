@@ -43,6 +43,37 @@ The build fails, loudly, on any of these. It never skips a post quietly.
 - An em dash or en dash anywhere in the prose. House style bans both. Write
   "10 to 15", not a dash. Code blocks and inline code are exempt
 
+## Diagrams
+
+Diagrams are authored as text in the post and rendered to SVG offline, so the
+source is reviewable in the PR diff and the reader downloads no diagram
+JavaScript. Write a mermaid fence with the caption on the fence line:
+
+    ```mermaid Write path for a new short link, 50k writes per day assumed
+    flowchart LR
+      A[Client] --> B[API]
+      B --> C[(Shard)]
+    ```
+
+Then render and commit:
+
+```bash
+npm run diagrams
+```
+
+Rules the build enforces:
+
+- Every diagram needs a caption on the fence line. The caption is the
+  `figcaption` and the accessible name of the figure
+- The rendered SVG must be committed under `content/blog/diagrams`. A missing or
+  stale render fails the build with the file name and the fix command
+- Diagram labels are prose, so the em dash ban applies inside a mermaid fence
+
+House rules the build cannot check: a diagram is planned in the outline rather
+than added at the end, carries information that is not in the prose, states its
+assumptions and scale targets on the diagram, and the argument has to survive a
+reader who cannot see it.
+
 ## Notes
 
 - Reading time is computed from the word count at 220 words per minute

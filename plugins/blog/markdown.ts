@@ -8,6 +8,7 @@
 
 import { Marked, Renderer } from 'marked';
 import { createHighlighter, type Highlighter } from 'shiki';
+import { parseDiagramInfo, renderDiagram, type DiagramContext } from './diagrams';
 import {
   HIGHLIGHT_LANGS,
   HIGHLIGHT_THEME,
@@ -52,7 +53,10 @@ function codeKey(lang: string, text: string): string {
   return `${lang}\u0000${text}`;
 }
 
-export async function renderMarkdown(markdown: string): Promise<RenderResult> {
+export async function renderMarkdown(
+  markdown: string,
+  diagrams?: DiagramContext,
+): Promise<RenderResult> {
   const marked = new Marked({ gfm: true, breaks: false });
   const tokens = marked.lexer(markdown) as unknown as CodeToken[];
 
@@ -64,6 +68,8 @@ export async function renderMarkdown(markdown: string): Promise<RenderResult> {
     const highlighter = await getHighlighter();
     const known = new Set(highlighter.getLoadedLanguages());
     for (const token of codeTokens) {
+      // A diagram fence is not code and is never highlighted.
+      if (parseDiagramInfo(token.lang ?? '')) continue;
       const raw = (token.lang ?? '').trim().split(/\s+/)[0] ?? '';
       const lang = known.has(raw) ? raw : 'text';
       const text = token.text ?? '';
@@ -78,7 +84,18 @@ export async function renderMarkdown(markdown: string): Promise<RenderResult> {
   const usedIds = new Set<string>();
   const renderer = new Renderer();
 
+  let diagramCount = 0;
   renderer.code = (code: string, infostring: string | undefined) => {
+    const diagram = parseDiagramInfo(infostring ?? '');
+    if (diagram) {
+      diagramCount += 1;
+      if (!diagrams) {
+        throw new Error(
+          'a mermaid diagram fence was found but no diagram context was supplied',
+        );
+      }
+      return renderDiagram(diagrams, code, diagram.caption, diagramCount);
+    }
     const pre = highlighted.get(codeKey(infostring ?? '', code));
     if (pre) return `<div class="blog-code">${pre}</div>`;
     return `<div class="blog-code"><pre><code>${escapeHtml(code)}</code></pre></div>`;
