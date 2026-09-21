@@ -26,13 +26,17 @@ import { countWords, renderMarkdown } from './markdown';
  */
 function assertNoEmDash(file: string, markdown: string): void {
   const lines = markdown.split('\n');
-  let inFence = false;
+  let fenceInfo: string | null = null;
   lines.forEach((line, index) => {
-    if (/^\s*```/.test(line)) {
-      inFence = !inFence;
+    const fence = line.match(/^\s*```(.*)$/);
+    if (fence) {
+      fenceInfo = fenceInfo === null ? fence[1].trim() : null;
       return;
     }
-    if (inFence) return;
+    // A diagram label is published prose, so mermaid fences are NOT exempt.
+    // Mermaid syntax uses ASCII hyphens, never the characters banned here.
+    const exemptFence = fenceInfo !== null && !/^mermaid(\s|$)/.test(fenceInfo);
+    if (exemptFence) return;
     const withoutInlineCode = line.replace(/`[^`]*`/g, '');
     if (/[\u2014\u2013]/.test(withoutInlineCode)) {
       fail(
@@ -75,7 +79,7 @@ function assertDate(file: string, key: string, value: string): void {
   }
 }
 
-async function loadOne(dir: string, fileName: string): Promise<BlogPost> {
+async function loadOne(root: string, dir: string, fileName: string): Promise<BlogPost> {
   const fullPath = path.join(dir, fileName);
   const raw = fs.readFileSync(fullPath, 'utf8');
   const parsed = matter(raw);
@@ -124,7 +128,7 @@ async function loadOne(dir: string, fileName: string): Promise<BlogPost> {
     return tag.trim();
   });
 
-  const { html, toc } = await renderMarkdown(body);
+  const { html, toc } = await renderMarkdown(body, { root, file: fileName });
   const wordCount = countWords(body);
 
   return {
@@ -159,7 +163,7 @@ export async function loadPosts(root: string, includeDrafts: boolean): Promise<B
 
   const posts: BlogPost[] = [];
   for (const file of files) {
-    posts.push(await loadOne(dir, file));
+    posts.push(await loadOne(root, dir, file));
   }
 
   const seen = new Map<string, string>();

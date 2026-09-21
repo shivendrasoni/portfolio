@@ -175,3 +175,38 @@
   border: 0;
   padding: 0;
 }
+
+/* --- Diagrams -------------------------------------------------------------
+ * Build time inlined SVG. No client side renderer, so these rules only have to
+ * size and frame output that is already drawn.
+ */
+
+.blog-prose .blog-figure {
+  margin: 2.25em 0;
+  padding: 1.25rem 1rem 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.blog-prose .blog-figure-svg {
+  overflow-x: auto;
+}
+
+.blog-prose .blog-figure svg {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+
+.blog-prose .blog-figure figcaption {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  text-align: left;
+}

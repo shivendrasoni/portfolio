@@ -1,0 +1,5 @@
+{
+  "renderer": "@mermaid-js/mermaid-cli@11.17.0",
+  "fingerprint": "fad0d4f7a270",
+  "note": "Written by scripts/render-diagrams.mjs. The build reads fingerprint to address rendered SVG. Do not edit by hand."
+}
