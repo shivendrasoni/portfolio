@@ -9,6 +9,8 @@ export const BLOG_DESCRIPTION =
   'Engineering notes on building and running AI systems in production.';
 export const AUTHOR_NAME = 'Shivendra Soni';
 export const CONTENT_DIR = 'content/blog';
+/** Committed, build time rendered diagram SVG. Written by scripts/render-diagrams.mjs. */
+export const DIAGRAM_DIR = 'content/blog/diagrams';
 export const WORDS_PER_MINUTE = 220;
 
 export const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
