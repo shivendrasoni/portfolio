@@ -1,20 +1,22 @@
-# TEMPORARY. Branch scoped, manual only, deleted before this PR is reviewed.
+# TEMPORARY. Branch scoped, deleted before this PR is reviewed.
 #
 # Exists because the machine that authored this branch has no git binary and
-# cannot push generated binary-ish blobs through the API. This workflow applies
-# the two bootstrap edits and renders the mermaid diagrams on a runner, then
-# commits the result to this branch.
+# cannot push generated blobs through the API. This workflow applies the two
+# bootstrap edits and renders the mermaid diagrams on a runner, then commits the
+# result to this branch. A push made with GITHUB_TOKEN does not trigger
+# workflows, so this cannot retrigger itself.
 name: diagram bootstrap (temporary)
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - blog/diagrams-phase-2
 
 permissions:
   contents: write
 
 jobs:
   bootstrap:
-    if: github.ref == 'refs/heads/blog/diagrams-phase-2'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
