@@ -1,15 +1,17 @@
-# TEMPORARY. Branch scoped, dispatch only, deleted by its own final commit.
+# TEMPORARY. Branch scoped, and deleted by its own final commit.
 #
 # The machine that authored this branch has no git binary, so rendered SVG
 # cannot be pushed through the API, and the transport it does have escapes
 # quotes, so post markdown is staged quote free under content/blog/_enc and
-# decoded here. Dispatch only, so the whole batch is assembled in one run
-# rather than one run per post. A push made with GITHUB_TOKEN does not trigger
-# workflows, so this cannot retrigger itself.
+# decoded here. Everything is already staged, so this runs once, on the push
+# that adds this trigger. A push made with GITHUB_TOKEN does not trigger
+# workflows, so it cannot retrigger itself, and it deletes itself at the end.
 name: blog batch assemble (temporary)
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - blog/batch-six-posts
 
 permissions:
   contents: write
