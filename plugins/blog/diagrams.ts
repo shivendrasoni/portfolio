@@ -70,10 +70,21 @@ export function diagramHash(fingerprint: string, source: string): string {
  * The caption becomes the figcaption and part of the accessible name, so it is
  * required: a diagram with no caption is a diagram nobody can cite.
  */
-export function parseDiagramInfo(infostring: string): { caption: string } | null {
+export function parseDiagramInfo(
+  infostring: string,
+): { kind: 'mermaid' | 'svg'; caption: string } | null {
   const trimmed = infostring.trim();
-  if (!/^mermaid(\s|$)/.test(trimmed)) return null;
-  return { caption: trimmed.slice('mermaid'.length).trim() };
+  if (/^mermaid(\s|$)/.test(trimmed)) {
+    return { kind: 'mermaid', caption: trimmed.slice('mermaid'.length).trim() };
+  }
+  // A hand authored figure. mermaid cannot draw some shapes (a hash ring is the
+  // standing example), so the SVG source itself lives in the markdown: still
+  // text, still reviewable in the diff, still zero client JavaScript, and it
+  // needs no offline render step because there is nothing to render.
+  if (/^svg(\s|$)/.test(trimmed)) {
+    return { kind: 'svg', caption: trimmed.slice('svg'.length).trim() };
+  }
+  return null;
 }
 
 /**
@@ -85,6 +96,7 @@ export function renderDiagram(
   source: string,
   caption: string,
   index: number,
+  kind: 'mermaid' | 'svg' = 'mermaid',
 ): string {
   if (caption === '') {
     fail(
@@ -92,6 +104,10 @@ export function renderDiagram(
       `diagram ${index} has no caption. Write the caption on the fence: ` +
         '```mermaid Write path for a new short link',
     );
+  }
+
+  if (kind === 'svg') {
+    return figure(ctx, source, caption, hashOfSource(source));
   }
 
   const hash = diagramHash(renderConfigFingerprint(ctx), source);
@@ -106,7 +122,24 @@ export function renderDiagram(
     );
   }
 
-  const raw = sanitiseSvg(ctx.file, fs.readFileSync(svgPath, 'utf8'));
+  return figure(ctx, fs.readFileSync(svgPath, 'utf8'), caption, hash);
+}
+
+/** Content address of a hand authored figure. No palette fingerprint: nothing
+ * was rendered, so there is no renderer version to invalidate against. */
+function hashOfSource(source: string): string {
+  return crypto
+    .createHash('sha256')
+    .update(source.replace(/\r\n/g, '\n').trim())
+    .digest('hex')
+    .slice(0, 12);
+}
+
+/** Sanitise, namespace and wrap. Identical treatment for rendered and hand
+ * authored SVG, so a hand authored figure cannot smuggle in a script, an event
+ * handler, or an id that restyles another figure on the same page. */
+function figure(ctx: DiagramContext, rawSvg: string, caption: string, hash: string): string {
+  const raw = sanitiseSvg(ctx.file, rawSvg);
   const svg = namespaceIds(dropDuplicateUnreferencedIds(raw), hash);
   const labelId = `d${hash}-caption`;
 

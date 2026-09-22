@@ -6,7 +6,7 @@
 export const SITE_URL = 'https://shivendrasoni.com';
 export const BLOG_TITLE = 'Shivendra Soni';
 export const BLOG_DESCRIPTION =
-  'Engineering notes on building and running AI systems in production.';
+  'Long form notes, observations and opinions on building and running systems in production and at scale.';
 export const AUTHOR_NAME = 'Shivendra Soni';
 export const CONTENT_DIR = 'content/blog';
 /** Committed, build time rendered diagram SVG. Written by scripts/render-diagrams.mjs. */

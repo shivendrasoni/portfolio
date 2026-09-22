@@ -94,7 +94,7 @@ export async function renderMarkdown(
           'a mermaid diagram fence was found but no diagram context was supplied',
         );
       }
-      return renderDiagram(diagrams, code, diagram.caption, diagramCount);
+      return renderDiagram(diagrams, code, diagram.caption, diagramCount, diagram.kind);
     }
     const pre = highlighted.get(codeKey(infostring ?? '', code));
     if (pre) return `<div class="blog-code">${pre}</div>`;
