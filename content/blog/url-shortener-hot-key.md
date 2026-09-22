@@ -135,15 +135,6 @@ Most shorteners never meet a hot key that matters. For an internal tool or a fix
 
 The steel manned version is not "reads are easy". It is "reads are easy until one key exceeds a partition, most systems never get there, so do not pay for it until the distribution tells you to". Good argument, and it is why I would ship the simple version first. What I would build in from day one is not the machinery but the measurement: per key request counters at the edge with a high water mark. Cheap, boring, and it tells you the day the assumption breaks.
 
-## What I would build
-
-1. One store, no premature sharding. Shard when read throughput or blast radius demands it, not when the row count looks big.
-2. Per region counter, base62, region in the code. More entropy if enumeration is in the threat model.
-3. A small in process popularity cache per redirect server, sized against storage nodes rather than links, with coalescing and jittered TTLs.
-4. Probabilistic early refresh, so hot entries renew before they expire rather than after.
-5. 302 by default, 301 only for links explicitly marked immutable.
-6. Click events off the critical path, and per key counters at the edge so a hot key is visible forming rather than inferred from a latency graph.
-
 The judgement I would offer someone about to whiteboard this: you are graded on ID generation and you get paged about read distribution. Design for the second one.
 
 ## Sources
