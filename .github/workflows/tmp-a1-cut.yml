@@ -1,0 +1,43 @@
+name: tmp-a1-cut
+on:
+  workflow_dispatch:
+jobs:
+  cut:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: blog/post-url-shortener-hot-key
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Apply cut
+        run: |
+          python3 - <<'PY'
+          p = 'content/blog/url-shortener-hot-key.md'
+          s = open(p).read()
+          start = s.index('## What I would build')
+          end = s.index('## Sources')
+          block = s[start:end]
+          closing = "The judgement I would offer someone about to whiteboard this: you are graded on ID generation and you get paged about read distribution. Design for the second one.\n\n"
+          assert closing.strip() in block, 'closing line missing'
+          s = s[:start] + closing + s[end:]
+          open(p, 'w').write(s)
+          print('cut applied')
+          PY
+      - name: Remove this workflow
+        run: rm .github/workflows/tmp-a1-cut.yml
+      - name: Verify
+        run: |
+          npm ci
+          npm run lint
+          npm run build
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'edit: cut the closing recap section, end on the argument'
+          git push origin blog/post-url-shortener-hot-key
