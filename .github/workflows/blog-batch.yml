@@ -50,7 +50,7 @@ jobs:
           for slug in $SLUGS; do
             figs=$(node tools/blog-batch-figs.mjs $slug)
             git add content/blog/$slug.md $figs
-            git commit -m "blog: $slug"
+            git commit -m 'blog: '$slug
           done
 
       - name: Verify every diagram is present and current
