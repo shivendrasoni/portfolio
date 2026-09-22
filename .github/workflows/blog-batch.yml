@@ -1,0 +1,53 @@
+# TEMPORARY. Branch scoped, dispatch only, and deleted by its own final commit.
+#
+# The machine that authored this branch has no git binary, so generated blobs
+# (rendered SVG) cannot be pushed through the API. This workflow applies the two
+# pipeline edits and renders every mermaid fence on a runner, then commits the
+# result to this branch. Dispatch only, so it runs once for the whole batch
+# rather than once per post. A push made with GITHUB_TOKEN does not trigger
+# workflows, so it cannot retrigger itself.
+name: blog batch assemble (temporary)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Apply pipeline edits
+        run: |
+          python3 tools/blog-batch-1.py
+          python3 tools/blog-batch-2.py
+
+      - name: Commit the pipeline change on its own
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add plugins/blog/diagrams.ts plugins/blog/markdown.ts src/components/blog/prose.css
+          git commit -m 'blog: render hand authored SVG figures, and let figures use the full width on wide screens'
+
+      - name: Render diagrams
+        run: npm run diagrams
+
+      - name: Verify every diagram is present and current
+        run: npm run diagrams:check
+
+      - name: Show what changed
+        run: git --no-pager status --short
+
+      - name: Commit rendered diagrams and remove this workflow
+        run: |
+          git rm -r --quiet tools .github/workflows/blog-batch.yml
+          git add -A
+          git commit -m 'blog: rendered diagrams for the batch, and remove the temporary assembly workflow'
+          git push
