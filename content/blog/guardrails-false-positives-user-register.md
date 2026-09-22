@@ -1,7 +1,7 @@
 ---
 title: Guardrails that fired on the wrong people
 slug: guardrails-false-positives-user-register
-date: 2026-09-22
+date: 2026-08-31
 description: A user said "you are the bomb" and the safety layer stopped the conversation. The library passed our tests because our tests were written by engineers, and real users do not talk like engineers.
 tags:
   - applied-ai

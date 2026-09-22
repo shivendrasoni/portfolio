@@ -1,7 +1,7 @@
 ---
 title: The needle in a haystack test, and what long context did not fix
 slug: needle-in-a-haystack-long-context
-date: 2026-09-22
+date: 2026-08-15
 description: A green needle chart means a model can find a sentence it has already seen the words of. Real corpora contradict themselves, real questions share no vocabulary with the answer, and both of those are missing from the test.
 tags:
   - applied-ai

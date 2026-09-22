@@ -19,12 +19,14 @@ function NotFound() {
       <div className="max-w-md text-center">
         <p className="text-[12px] uppercase tracking-[0.18em] text-white/40">404</p>
         <h1 className="mt-4 text-[26px] font-semibold">That post does not exist</h1>
-        <Link
-          to="/blog"
-          className="mt-6 inline-block text-[14px] text-[#6fd3c2] underline underline-offset-4"
-        >
-          All writing
-        </Link>
+        <div className="mt-6 flex items-center justify-center gap-5 text-[14px]">
+          <Link to="/blog" className="text-[#6fd3c2] underline underline-offset-4">
+            All writing
+          </Link>
+          <Link to="/" className="text-white/60 underline underline-offset-4 hover:text-white">
+            Home
+          </Link>
+        </div>
       </div>
     </main>
   );
@@ -76,12 +78,29 @@ export default function BlogPost() {
         image={post.ogImage ? new URL(post.ogImage, SITE_URL).toString() : undefined}
       />
       <div className="mx-auto w-full max-w-3xl px-6 py-24 sm:py-28">
-        <Link
-          to="/blog"
-          className="text-[12px] uppercase tracking-[0.18em] text-white/40 transition-colors hover:text-white"
+        <nav
+          aria-label="Breadcrumb"
+          className="flex flex-wrap items-center gap-x-3 gap-y-2 text-[13px] text-white/70"
         >
-          All writing
-        </Link>
+          <Link
+            to="/"
+            className="group inline-flex items-center gap-2 transition-colors hover:text-[#6fd3c2]"
+          >
+            <span aria-hidden="true">&larr;</span>
+            <span className="border-b border-white/25 pb-0.5 transition-colors group-hover:border-[#6fd3c2]">
+              Shivendra Soni
+            </span>
+          </Link>
+          <span aria-hidden="true" className="text-white/25">
+            /
+          </span>
+          <Link
+            to="/blog"
+            className="border-b border-white/25 pb-0.5 transition-colors hover:border-[#6fd3c2] hover:text-[#6fd3c2]"
+          >
+            All writing
+          </Link>
+        </nav>
 
         <header className="mb-12 mt-8">
           <h1 className="text-[32px] font-semibold leading-tight tracking-tight sm:text-[40px]">
@@ -109,12 +128,12 @@ export default function BlogPost() {
           <article className="blog-prose" dangerouslySetInnerHTML={{ __html: html }} />
         )}
 
-        <footer className="mt-16 border-t border-white/10 pt-8">
-          <Link
-            to="/blog"
-            className="text-[13px] text-white/50 transition-colors hover:text-[#6fd3c2]"
-          >
+        <footer className="mt-16 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-white/10 pt-8 text-[13px]">
+          <Link to="/blog" className="text-white/60 transition-colors hover:text-[#6fd3c2]">
             More writing
+          </Link>
+          <Link to="/" className="text-white/60 transition-colors hover:text-[#6fd3c2]">
+            Back to shivendrasoni.com
           </Link>
         </footer>
       </div>

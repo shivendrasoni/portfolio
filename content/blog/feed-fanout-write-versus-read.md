@@ -1,7 +1,7 @@
 ---
 title: Fanout on write versus fanout on read, and where the boundary actually sits
 slug: feed-fanout-write-versus-read
-date: 2026-09-22
+date: 2026-07-29
 description: The interview answer picks one strategy for the whole system. Production picks per account, and the thing that sets the boundary is the follower count distribution, not the request rate.
 tags:
   - system-design

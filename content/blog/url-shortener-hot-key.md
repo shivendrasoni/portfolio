@@ -1,7 +1,7 @@
 ---
 title: Design a URL shortener that survives a hot key
 slug: url-shortener-hot-key
-date: 2026-09-22
+date: 2026-07-06
 description: The standard system design answer optimises the write path, which is the easy half. What breaks a shortener in production is the distribution of reads, and one link is enough to do it.
 tags:
   - system-design

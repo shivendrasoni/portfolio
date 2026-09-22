@@ -1,7 +1,7 @@
 ---
 title: Bloom filters, and the cost of being wrong cheaply
 slug: bloom-filters-who-pays-for-the-false-positive
-date: 2026-09-22
+date: 2026-08-24
 description: The interesting tradeoff is not memory against accuracy. It is who downstream pays for a false positive, and whether the rate you designed for survives the set outgrowing the filter.
 tags:
   - system-design

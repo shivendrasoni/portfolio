@@ -1,7 +1,7 @@
 ---
 title: RAG, its types, and when retrieval is the wrong tool
 slug: rag-when-retrieval-is-wrong
-date: 2026-09-22
+date: 2026-07-17
 description: Most teams debug a retrieval problem as if it were a model problem. Retrieval grounds an answer, it does not give a model knowledge, and there is a class of question no retrieval strategy will ever answer.
 tags:
   - applied-ai

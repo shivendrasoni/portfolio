@@ -11,23 +11,27 @@ export default function BlogIndex() {
     <main className="font-inter min-h-screen bg-[#0a0a0a] text-white antialiased">
       <PageHead
         title="Writing | Shivendra Soni"
-        description="Engineering notes on building and running AI systems in production."
+        description="Long form notes, observations and opinions on building and running systems in production and at scale."
         canonical={`${SITE_URL}/blog`}
       />
       <div className="mx-auto w-full max-w-3xl px-6 py-24 sm:py-28">
         <header className="mb-14">
           <Link
             to="/"
-            className="text-[12px] uppercase tracking-[0.18em] text-white/40 transition-colors hover:text-white"
+            className="group inline-flex items-center gap-2 text-[13px] text-white/70 transition-colors hover:text-[#6fd3c2]"
           >
-            Shivendra Soni
+            <span aria-hidden="true">&larr;</span>
+            <span className="border-b border-white/25 pb-0.5 transition-colors group-hover:border-[#6fd3c2]">
+              Shivendra Soni
+            </span>
           </Link>
           <h1 className="mt-6 text-[34px] font-semibold leading-tight tracking-tight sm:text-[42px]">
             Writing
           </h1>
-          <p className="mt-4 max-w-xl text-[15.5px] leading-relaxed text-white/55">
-            Long form notes on building and running AI systems in production. Fewer posts, more
-            detail.
+          <p className="mt-4 max-w-2xl text-[15.5px] leading-relaxed text-white/55">
+            Long form notes, observations and opinions on building and running systems in
+            production and at scale. I try to go into as much depth as I possibly can here, so
+            these might be a bit lengthy.
           </p>
           <a
             href="/rss.xml"

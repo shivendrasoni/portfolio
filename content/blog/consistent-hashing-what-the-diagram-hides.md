@@ -1,7 +1,7 @@
 ---
 title: Consistent hashing, and the three things the ring diagram never tells you
 slug: consistent-hashing-what-the-diagram-hides
-date: 2026-09-22
+date: 2026-08-06
 description: The ring solves rebalancing. It does not solve hot shards, its load balance is weaker than the picture suggests, and the virtual node count nobody revisits is a real operational decision.
 tags:
   - system-design
