@@ -1,6 +1,10 @@
 name: tmp-a1-cut
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - blog/post-url-shortener-hot-key
+    paths:
+      - '.github/workflows/tmp-a1-cut.yml'
 jobs:
   cut:
     runs-on: ubuntu-latest
