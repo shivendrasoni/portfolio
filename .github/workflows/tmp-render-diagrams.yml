@@ -1,4 +1,4 @@
-name: tmp render diagrams
+name: tmp assemble and render
 
 on:
   push:
@@ -7,6 +7,7 @@ on:
 
 jobs:
   render:
+    if: contains(github.event.head_commit.message, 'Assemble post')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -15,12 +16,20 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - name: assemble post from staged parts
+        run: |
+          cat content/blog/_a1p1.md content/blog/_a1p2.md > content/blog/url-shortener-hot-key.md
+          rm content/blog/_a1p1.md content/blog/_a1p2.md
+          rm .github/workflows/tmp-render-diagrams.yml
+          wc -c content/blog/url-shortener-hot-key.md
       - run: npm ci
       - run: npm run diagrams
-      - name: commit rendered diagrams
+      - run: npm run lint
+      - run: npm run build
+      - name: commit assembled post and rendered diagrams
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add content/blog/diagrams
-          git diff --cached --quiet || git commit -m "Render diagrams for url-shortener-hot-key"
+          git add -A content/blog .github/workflows
+          git commit -m "Post: design a URL shortener that survives a hot key"
           git push
