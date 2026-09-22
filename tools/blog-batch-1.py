@@ -74,9 +74,9 @@ old_tail = """  const raw = sanitiseSvg(ctx.file, fs.readFileSync(svgPath, 'utf8
   const labelId = `d${hash}-caption`;
 
   return (
-    `<figure class=\"blog-figure\" role=\"group\" aria-labelledby=\"${labelId}\">` +
-    `<div class=\"blog-figure-svg\">${svg}</div>` +
-    `<figcaption id=\"${labelId}\">${escapeHtml(caption)}</figcaption>` +
+    `<figure class="blog-figure" role="group" aria-labelledby="${labelId}">` +
+    `<div class="blog-figure-svg">${svg}</div>` +
+    `<figcaption id="${labelId}">${escapeHtml(caption)}</figcaption>` +
     `</figure>`
   );
 }"""
@@ -103,9 +103,9 @@ function figure(ctx: DiagramContext, rawSvg: string, caption: string, hash: stri
   const labelId = `d${hash}-caption`;
 
   return (
-    `<figure class=\"blog-figure\" role=\"group\" aria-labelledby=\"${labelId}\">` +
-    `<div class=\"blog-figure-svg\">${svg}</div>` +
-    `<figcaption id=\"${labelId}\">${escapeHtml(caption)}</figcaption>` +
+    `<figure class="blog-figure" role="group" aria-labelledby="${labelId}">` +
+    `<div class="blog-figure-svg">${svg}</div>` +
+    `<figcaption id="${labelId}">${escapeHtml(caption)}</figcaption>` +
     `</figure>`
   );
 }"""
