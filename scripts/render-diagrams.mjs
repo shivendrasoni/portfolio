@@ -1,6 +1,12 @@
 #!/usr/bin/env node
 /**
- * Renders every ```mermaid fence in content/blog/*.md to a committed SVG.
+ * Renders every figure fence in content/blog/*.md to committed files.
+ *
+ * A ```mermaid fence becomes a committed SVG plus a committed PNG. A hand
+ * authored ```svg fence keeps its source in the markdown and only needs the
+ * PNG. The PNG exists because importers, feed readers and mail clients copy
+ * <img> and drop SVG; see scripts/rasterise.mjs for why it has an opaque
+ * background and why it is never re-rendered in place.
  *
  * Run this locally when a diagram is added or changed, then commit the SVG
  * alongside the post:
@@ -23,6 +29,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { CONFIG_FINGERPRINT, MERMAID_CONFIG, PUPPETEER_CONFIG } from './diagram-palette.mjs';
 import { extractDiagrams, listPosts } from './diagram-scan.mjs';
+import { findChrome, rasterise } from './rasterise.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CONTENT_DIR = path.join(ROOT, 'content/blog');
@@ -36,10 +43,22 @@ const args = new Set(process.argv.slice(2));
 const FORCE = args.has('--force');
 const CHECK = args.has('--check');
 
+/** Content address of a mermaid fence: source plus the palette it renders with. */
 function hashOf(source) {
   return crypto
     .createHash('sha256')
     .update(`${CONFIG_FINGERPRINT}\n${source.replace(/\r\n/g, '\n').trim()}`)
+    .digest('hex')
+    .slice(0, 12);
+}
+
+/** Content address of a hand authored ```svg fence. No palette fingerprint:
+ * nothing is rendered, so there is no renderer version to invalidate against.
+ * Must stay identical to hashOfSource in plugins/blog/diagrams.ts. */
+function hashOfSource(source) {
+  return crypto
+    .createHash('sha256')
+    .update(source.replace(/\r\n/g, '\n').trim())
     .digest('hex')
     .slice(0, 12);
 }
@@ -81,7 +100,7 @@ function main() {
   }
 
   if (diagrams.length === 0) {
-    console.log('No mermaid fences found in content/blog. Nothing to render.');
+    console.log('No figure fences found in content/blog. Nothing to render.');
     return;
   }
 
@@ -100,42 +119,66 @@ function main() {
   );
   const wanted = new Set();
   const missing = [];
+  // Chromium is only needed if something actually has to be rasterised, so a
+  // --check run on a machine without it still works.
+  let chrome = null;
 
   for (const diagram of diagrams) {
-    const hash = hashOf(diagram.source);
-    wanted.add(`${hash}.svg`);
-    const outFile = path.join(DIAGRAM_DIR, `${hash}.svg`);
-    const exists = fs.existsSync(outFile);
+    const isMermaid = diagram.kind !== 'svg';
+    const hash = isMermaid ? hashOf(diagram.source) : hashOfSource(diagram.source);
+    const where = `${diagram.file}:${diagram.line}  ${diagram.caption}`;
 
-    if (exists && !FORCE) {
-      console.log(`ok      ${hash}.svg  ${diagram.file}:${diagram.line}  ${diagram.caption}`);
+    // 1. The SVG. Hand authored figures keep their source in the markdown, so
+    //    there is nothing to render and nothing to commit.
+    const svgFile = path.join(DIAGRAM_DIR, `${hash}.svg`);
+    if (isMermaid) {
+      wanted.add(`${hash}.svg`);
+      const haveSvg = fs.existsSync(svgFile);
+      if (haveSvg && !FORCE) {
+        console.log(`ok      ${hash}.svg  ${where}`);
+      } else if (CHECK) {
+        missing.push(`${diagram.file}:${diagram.line} -> ${hash}.svg  ${diagram.caption}`);
+      } else {
+        process.stdout.write(`render  ${hash}.svg  ${diagram.file}:${diagram.line} ... `);
+        render(diagram.source, svgFile);
+        console.log(`${fs.statSync(svgFile).size} bytes`);
+      }
+    }
+
+    // 2. The PNG fallback, for every figure of either kind. Rendered only when
+    //    missing: PNG bytes are not reproducible across machines, so
+    //    re-rendering an existing one would churn the repository for nothing.
+    wanted.add(`${hash}.png`);
+    const pngFile = path.join(DIAGRAM_DIR, `${hash}.png`);
+    if (fs.existsSync(pngFile)) {
+      console.log(`ok      ${hash}.png  ${where}`);
       continue;
     }
     if (CHECK) {
-      missing.push(`${diagram.file}:${diagram.line} -> ${hash}.svg  ${diagram.caption}`);
+      missing.push(`${diagram.file}:${diagram.line} -> ${hash}.png  ${diagram.caption}`);
       continue;
     }
-
-    process.stdout.write(`render  ${hash}.svg  ${diagram.file}:${diagram.line} ... `);
-    render(diagram.source, outFile);
-    const bytes = fs.statSync(outFile).size;
-    console.log(`${bytes} bytes`);
+    const svg = isMermaid ? fs.readFileSync(svgFile, 'utf8') : diagram.source;
+    process.stdout.write(`raster  ${hash}.png  ${diagram.file}:${diagram.line} ... `);
+    chrome = chrome ?? findChrome();
+    rasterise(svg, pngFile, chrome);
+    console.log(`${fs.statSync(pngFile).size} bytes`);
   }
 
   // Orphans are reported, never deleted automatically: a post on another branch
   // may still reference one.
   const orphans = fs
     .readdirSync(DIAGRAM_DIR)
-    .filter((n) => n.endsWith('.svg') && !wanted.has(n));
+    .filter((n) => (n.endsWith('.svg') || n.endsWith('.png')) && !wanted.has(n));
   if (orphans.length > 0) {
     console.log(
-      `\n${orphans.length} committed SVG no longer referenced by any post: ${orphans.join(', ')}`,
+      `\n${orphans.length} committed figure file no longer referenced by any post: ${orphans.join(', ')}`,
     );
     console.log('Delete them by hand once you are sure no branch still uses them.');
   }
 
   if (CHECK && missing.length > 0) {
-    console.error('\nStale or missing diagram renders:');
+    console.error('\nStale or missing figure renders:');
     for (const line of missing) console.error(`  ${line}`);
     console.error('\nRun "npm run diagrams" and commit content/blog/diagrams.');
     process.exit(1);

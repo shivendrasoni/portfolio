@@ -113,9 +113,13 @@ export async function renderMarkdown(
     }
     usedIds.add(id);
     toc.push({ id, text: raw.replace(/<[^>]*>/g, ''), depth: level });
+    // The anchor carries no text of its own: the # glyph comes from CSS. A
+    // literal # inside the heading is copied verbatim by anything that
+    // republishes the page, which turns every subheading into "#Heading"
+    // somewhere else.
     return (
       `<h${level} id="${id}" class="blog-heading">` +
-      `<a class="blog-anchor" href="#${id}" aria-label="Link to this section">#</a>` +
+      `<a class="blog-anchor" href="#${id}" aria-label="Link to this section"></a>` +
       `${text}</h${level}>`
     );
   };

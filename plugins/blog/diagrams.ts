@@ -18,6 +18,7 @@ import fs from 'node:fs';
 import crypto from 'node:crypto';
 import path from 'node:path';
 import { DIAGRAM_DIR, escapeHtml, fail } from './config';
+import { figureFile, intrinsicSize, registerFigure } from './figures';
 import { dropDuplicateUnreferencedIds, namespaceIds, sanitiseSvg } from './svg';
 
 export interface DiagramContext {
@@ -107,7 +108,7 @@ export function renderDiagram(
   }
 
   if (kind === 'svg') {
-    return figure(ctx, source, caption, hashOfSource(source));
+    return figure(ctx, source, caption, hashOfSource(source), index);
   }
 
   const hash = diagramHash(renderConfigFingerprint(ctx), source);
@@ -122,7 +123,7 @@ export function renderDiagram(
     );
   }
 
-  return figure(ctx, fs.readFileSync(svgPath, 'utf8'), caption, hash);
+  return figure(ctx, fs.readFileSync(svgPath, 'utf8'), caption, hash, index);
 }
 
 /** Content address of a hand authored figure. No palette fingerprint: nothing
@@ -135,17 +136,55 @@ function hashOfSource(source: string): string {
     .slice(0, 12);
 }
 
-/** Sanitise, namespace and wrap. Identical treatment for rendered and hand
- * authored SVG, so a hand authored figure cannot smuggle in a script, an event
- * handler, or an id that restyles another figure on the same page. */
-function figure(ctx: DiagramContext, rawSvg: string, caption: string, hash: string): string {
+/**
+ * Sanitise, namespace, publish as files, and wrap in <picture>.
+ *
+ * Identical treatment for rendered and hand authored SVG, so a hand authored
+ * figure cannot smuggle in a script, an event handler, or an id that restyles
+ * another figure on the same page.
+ *
+ * The <source> is the SVG, so every browser shows the vector. The <img> is the
+ * committed PNG with the site background baked in, which is what an importer or
+ * a mail client copies when it cannot carry inline SVG, and what a reader sees
+ * on a white page. A missing PNG FAILS THE BUILD for the same reason a missing
+ * SVG does: a post must not ship without the figure its argument depends on.
+ */
+function figure(
+  ctx: DiagramContext,
+  rawSvg: string,
+  caption: string,
+  hash: string,
+  index: number,
+): string {
   const raw = sanitiseSvg(ctx.file, rawSvg);
   const svg = namespaceIds(dropDuplicateUnreferencedIds(raw), hash);
   const labelId = `d${hash}-caption`;
 
+  const pngPath = path.join(ctx.root, DIAGRAM_DIR, `${hash}.png`);
+  if (!fs.existsSync(pngPath)) {
+    fail(
+      ctx.file,
+      `diagram ${index} ("${caption}") has no PNG fallback at ` +
+        `${DIAGRAM_DIR}/${hash}.png. Run "npm run diagrams" and commit the result.`,
+    );
+  }
+  registerFigure({ hash, svg, pngPath });
+
+  const size = intrinsicSize(svg);
+  const dimensions = size ? ` width="${size.width}" height="${size.height}"` : '';
+  // The caption is the accessible name of the figure and the alt text of the
+  // image: one sentence, one source of truth, and it travels with the <img>
+  // into anything that copies the image and drops the <figcaption>.
+  const alt = escapeHtml(caption);
+
   return (
     `<figure class="blog-figure" role="group" aria-labelledby="${labelId}">` +
-    `<div class="blog-figure-svg">${svg}</div>` +
+    `<div class="blog-figure-svg">` +
+    `<picture>` +
+    `<source srcset="${figureFile(hash, 'svg')}" type="image/svg+xml" />` +
+    `<img src="${figureFile(hash, 'png')}" alt="${alt}"${dimensions} loading="lazy" decoding="async" />` +
+    `</picture>` +
+    `</div>` +
     `<figcaption id="${labelId}">${escapeHtml(caption)}</figcaption>` +
     `</figure>`
   );

@@ -43,6 +43,12 @@
 }
 
 /* Hangs in the left margin so the heading text stays flush with the body. */
+/* The # is drawn here rather than written into the heading, so a reader that
+   copies the markup does not carry a literal # into the headline. */
+.blog-prose .blog-anchor::before {
+  content: "#";
+}
+
 .blog-prose .blog-anchor {
   position: absolute;
   left: -1.1em;
@@ -177,7 +183,9 @@
 }
 
 /* --- Diagrams -------------------------------------------------------------
- * Build time inlined SVG. No client side renderer, so these rules only have to
+ * Build time rendered figures, published as files and referenced with
+ * <picture>. Every browser takes the SVG source; the PNG exists for readers
+ * that cannot carry SVG. No client side renderer, so these rules only have to
  * size and frame output that is already drawn.
  */
 
@@ -193,12 +201,17 @@
   overflow-x: auto;
 }
 
+.blog-prose .blog-figure img,
 .blog-prose .blog-figure svg {
   display: block;
   width: 100%;
   max-width: 100%;
   height: auto;
   margin: 0 auto;
+}
+
+.blog-prose .blog-figure picture {
+  display: block;
 }
 
 /* Diagrams carry more detail than a paragraph, so on a wide screen they are
