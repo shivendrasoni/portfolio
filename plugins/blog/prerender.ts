@@ -103,7 +103,18 @@ function articleJsonLd(post: BlogPost): string {
   return JSON.stringify(data).replace(/</g, '\\u003c');
 }
 
-export function renderPostPage(shell: string, post: BlogPost): string {
+function staticPostIndex(posts: BlogPost[], currentSlug: string): string {
+  const items = posts
+    .map((entry) =>
+      entry.slug === currentSlug
+        ? `<li>${escapeHtml(entry.title)}</li>`
+        : `<li><a href="/blog/${entry.slug}">${escapeHtml(entry.title)}</a></li>`,
+    )
+    .join('');
+  return `<nav aria-label="All posts"><h2>All writing</h2><ul>${items}</ul></nav>`;
+}
+
+export function renderPostPage(shell: string, post: BlogPost, all: BlogPost[] = []): string {
   const head = buildHead({
     title: `${post.title} | ${BLOG_TITLE}`,
     description: post.description,
@@ -124,6 +135,7 @@ export function renderPostPage(shell: string, post: BlogPost): string {
     `<p><time datetime="${post.date}">${post.date}</time> | ${post.readingMinutes} min read</p>`,
     `<div class="blog-prose">${post.html}</div>`,
     '</article>',
+    staticPostIndex(all, post.slug),
     '</main>',
   ].join('');
 

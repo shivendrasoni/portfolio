@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { bodies, findPost } from 'virtual:blog';
 import PageHead from '@/components/blog/PageHead';
+import PostDrawer from '@/components/blog/PostDrawer';
 import TableOfContents from '@/components/blog/TableOfContents';
 import { formatPostDate } from '@/components/blog/format';
 import '@/components/blog/prose.css';
@@ -77,6 +78,7 @@ export default function BlogPost() {
         type="article"
         image={post.ogImage ? new URL(post.ogImage, SITE_URL).toString() : undefined}
       />
+      <PostDrawer currentSlug={post.slug} />
       <div className="mx-auto w-full max-w-3xl px-6 py-24 sm:py-28">
         <nav
           aria-label="Breadcrumb"
