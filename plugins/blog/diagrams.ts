@@ -137,17 +137,23 @@ function hashOfSource(source: string): string {
 }
 
 /**
- * Sanitise, namespace, publish as files, and wrap in <picture>.
+ * Sanitise, namespace, publish as files, and emit the figure.
  *
  * Identical treatment for rendered and hand authored SVG, so a hand authored
  * figure cannot smuggle in a script, an event handler, or an id that restyles
  * another figure on the same page.
  *
- * The <source> is the SVG, so every browser shows the vector. The <img> is the
- * committed PNG with the site background baked in, which is what an importer or
- * a mail client copies when it cannot carry inline SVG, and what a reader sees
- * on a white page. A missing PNG FAILS THE BUILD for the same reason a missing
- * SVG does: a post must not ship without the figure its argument depends on.
+ * srcset is the SVG, so every browser shows the vector. src is the committed
+ * PNG with the site background baked in, which is what an importer or a mail
+ * client copies when it cannot carry inline SVG, and what a reader sees on a
+ * white page. A missing PNG FAILS THE BUILD for the same reason a missing SVG
+ * does: a post must not ship without the figure its argument depends on.
+ *
+ * The <img> and the <figcaption> are DIRECT CHILDREN of the <figure>. A
+ * wrapping <div> or <picture> is invisible to a reader and fatal to a
+ * republisher: importers pair a caption to an image by walking the figure's
+ * own children, so the wrapper cost every caption on Medium. Anything added
+ * between the figure and its image has to keep that pairing intact.
  */
 function figure(
   ctx: DiagramContext,
@@ -179,12 +185,9 @@ function figure(
 
   return (
     `<figure class="blog-figure" role="group" aria-labelledby="${labelId}">` +
-    `<div class="blog-figure-svg">` +
-    `<picture>` +
-    `<source srcset="${figureFile(hash, 'svg')}" type="image/svg+xml" />` +
-    `<img src="${figureFile(hash, 'png')}" alt="${alt}"${dimensions} loading="lazy" decoding="async" />` +
-    `</picture>` +
-    `</div>` +
+    `<img class="blog-figure-img" src="${figureFile(hash, 'png')}" ` +
+    `srcset="${figureFile(hash, 'svg')} 1x" alt="${alt}"${dimensions} ` +
+    `loading="lazy" decoding="async" />` +
     `<figcaption id="${labelId}">${escapeHtml(caption)}</figcaption>` +
     `</figure>`
   );
