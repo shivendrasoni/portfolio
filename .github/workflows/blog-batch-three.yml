@@ -1,0 +1,60 @@
+# TEMPORARY. Branch scoped, dispatch only, deleted by its own final commit.
+#
+# The machine that authored this branch has no git binary, so the rendered SVG
+# figures cannot be pushed from it. This workflow applies the drawer wiring
+# patch, renders every diagram, and commits the figures. Dispatch only, and a
+# push made with GITHUB_TOKEN does not trigger workflows, so it cannot
+# retrigger itself.
+name: blog batch three assemble (temporary)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Configure git
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+      - name: Wire the drawer into both routes and the prerender
+        run: |
+          node tools/blog-drawer-patch.mjs
+          git add src/artifacts/blog/index.tsx 'src/artifacts/blog/[slug].tsx' plugins/blog/prerender.ts plugins/blog/index.ts
+          git commit -m 'blog: wire the post index drawer into both routes and the prerendered HTML'
+
+      - name: Render every diagram
+        run: npm run diagrams
+
+      - name: Commit the rendered figures
+        run: |
+          git add content/blog/diagrams
+          git commit -m 'blog: rendered figures for the batch'
+
+      - name: Verify every diagram is present and current
+        run: npm run diagrams:check
+
+      - name: Install, lint and build
+        run: |
+          npm ci
+          npm run lint
+          npm run build
+
+      - name: Remove the temporary tooling and push
+        run: |
+          git rm -r --quiet tools .github/workflows/blog-batch-three.yml
+          git add -A
+          git commit -m 'chore: remove the temporary batch assembly tooling'
+          git --no-pager log --oneline -14
+          git push
