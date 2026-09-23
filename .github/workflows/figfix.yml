@@ -1,0 +1,43 @@
+name: figure fallbacks
+
+on:
+  push:
+    branches: [blog/medium-safe-figures]
+    paths: [.github/workflows/figfix.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: blog/medium-safe-figures
+      - name: Unpack pipeline change
+        run: |
+          cat .ci/part0.txt .ci/part1.txt .ci/part2.txt .ci/part3.txt .ci/part4.txt .ci/part5.txt .ci/part6.txt | tr -d "\n" > /tmp/fig.b64
+          base64 -d /tmp/fig.b64 > /tmp/fig.tgz
+          tar xzf /tmp/fig.tgz
+          mv CI_MSG1.txt /tmp/msg1.txt
+          mv CI_MSG2.txt /tmp/msg2.txt
+          rm -rf .ci .github/workflows/figfix.yml
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add -A
+          git status --short
+          git commit -F /tmp/msg1.txt
+      - name: Render PNG fallbacks
+        run: |
+          ls -l /usr/bin/google-chrome /usr/bin/chromium /usr/bin/chromium-browser || true
+          node --version
+          node scripts/render-diagrams.mjs
+          node scripts/render-diagrams.mjs --check
+      - name: Commit and push
+        run: |
+          git add -A
+          git status --short
+          git commit -F /tmp/msg2.txt
+          du -sh content/blog/diagrams
+          git push origin HEAD:blog/medium-safe-figures
