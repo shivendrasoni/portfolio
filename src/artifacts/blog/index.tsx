@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { posts } from 'virtual:blog';
 import PageHead from '@/components/blog/PageHead';
 import PostCard from '@/components/blog/PostCard';
+import PostDrawer from '@/components/blog/PostDrawer';
 import '@/components/blog/prose.css';
 
 const SITE_URL = 'https://shivendrasoni.com';
@@ -14,6 +15,7 @@ export default function BlogIndex() {
         description="Long form notes, observations and opinions on building and running systems in production and at scale."
         canonical={`${SITE_URL}/blog`}
       />
+      <PostDrawer />
       <div className="mx-auto w-full max-w-3xl px-6 py-24 sm:py-28">
         <header className="mb-14">
           <Link

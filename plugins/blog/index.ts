@@ -159,7 +159,7 @@ export default function blogPlugin(): Plugin {
       // the extensionless /blog/<slug> fall through to the SPA shell, which is
       // the URL that actually gets shared.
       for (const post of posts) {
-        fs.writeFileSync(path.join(blogDir, post.slug + '.html'), renderPostPage(shell, post));
+        fs.writeFileSync(path.join(blogDir, post.slug + '.html'), renderPostPage(shell, post, posts));
       }
 
       const label = posts.length === 1 ? 'post' : 'posts';
