@@ -20,6 +20,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { Plugin, ResolvedConfig } from 'vite';
 import { CONTENT_DIR, type BlogPost, type BlogPostMeta } from './config';
+import { FIGURE_BASE, FIGURE_DIR, collectedFigures, resetFigures } from './figures';
 import { loadPosts } from './load';
 import { renderRobots, renderRss, renderSitemap } from './feeds';
 import { renderIndexPage, renderPostPage } from './prerender';
@@ -75,6 +76,9 @@ export default function blogPlugin(): Plugin {
   async function reload(): Promise<void> {
     // Drafts are visible on the dev server and never in a production build.
     loaded = false;
+    // Figure assets are collected while markdown is compiled, so the registry
+    // is emptied first: a deleted post must not keep publishing its figures.
+    resetFigures();
     posts = await loadPosts(config.root, config.command === 'serve');
     loaded = true;
   }
@@ -114,6 +118,26 @@ export default function blogPlugin(): Plugin {
     },
 
     configureServer(server) {
+      // In a build the figures are written into dist. On the dev server they
+      // are served from the same registry the HTML was generated from, so a
+      // diagram is never a 404 while writing a post.
+      server.middlewares.use((req, res, next) => {
+        const url = (req.url ?? '').split('?')[0];
+        if (!url.startsWith(`${FIGURE_BASE}/`)) return next();
+        const name = url.slice(FIGURE_BASE.length + 1);
+        const match = /^([0-9a-f]{12})\.(svg|png)$/.exec(name);
+        const asset = match ? collectedFigures().find((f) => f.hash === match[1]) : undefined;
+        if (!match || !asset) return next();
+        if (match[2] === 'svg') {
+          res.setHeader('Content-Type', 'image/svg+xml');
+          res.end(asset.svg);
+          return;
+        }
+        if (!fs.existsSync(asset.pngPath)) return next();
+        res.setHeader('Content-Type', 'image/png');
+        res.end(fs.readFileSync(asset.pngPath));
+      });
+
       const watched = path.join(config.root, CONTENT_DIR);
       server.watcher.add(watched);
       const invalidate = async (file: string) => {
@@ -145,6 +169,16 @@ export default function blogPlugin(): Plugin {
       fs.writeFileSync(path.join(outDir, 'sitemap.xml'), renderSitemap(posts));
       fs.writeFileSync(path.join(outDir, 'robots.txt'), renderRobots());
 
+      // Figures as files. The page shows the SVG through <picture>; the PNG
+      // is what an importer or a mail client copies when it cannot carry SVG.
+      const figureDir = path.join(outDir, FIGURE_DIR);
+      fs.mkdirSync(figureDir, { recursive: true });
+      const figures = collectedFigures();
+      for (const figure of figures) {
+        fs.writeFileSync(path.join(figureDir, `${figure.hash}.svg`), figure.svg);
+        fs.copyFileSync(figure.pngPath, path.join(figureDir, `${figure.hash}.png`));
+      }
+
       const blogDir = path.join(outDir, 'blog');
       fs.mkdirSync(blogDir, { recursive: true });
       // Flat here too: /blog resolves to blog.html under "cleanUrls". A
@@ -164,7 +198,8 @@ export default function blogPlugin(): Plugin {
 
       const label = posts.length === 1 ? 'post' : 'posts';
       config.logger.info(
-        `[blog] prerendered ${posts.length} ${label}, rss.xml, sitemap.xml, robots.txt`,
+        `[blog] prerendered ${posts.length} ${label}, ${figures.length} figures, ` +
+          'rss.xml, sitemap.xml, robots.txt',
       );
     },
   };

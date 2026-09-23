@@ -64,10 +64,35 @@ npm run diagrams
 Rules the build enforces:
 
 - Every diagram needs a caption on the fence line. The caption is the
-  `figcaption` and the accessible name of the figure
+  `figcaption`, the accessible name of the figure, and the `alt` text of the
+  image, so it travels with the figure into anything that copies it
 - The rendered SVG must be committed under `content/blog/diagrams`. A missing or
   stale render fails the build with the file name and the fix command
+- A PNG fallback must be committed next to it, same name, `.png`. `npm run
+  diagrams` renders it. A missing PNG fails the build
 - Diagram labels are prose, so the em dash ban applies inside a mermaid fence
+
+A figure mermaid cannot draw is hand authored instead. Write an `svg` fence with
+the caption on the fence line and the SVG source in the body. It is still text,
+still reviewable in the diff, and it needs no offline render, but it does need
+its committed PNG like any other figure.
+
+## Why each figure is two files
+
+Each figure is published as `/blog/figures/<hash>.svg` and
+`/blog/figures/<hash>.png` and referenced with `<picture>`. Browsers take the
+SVG. The PNG exists because syndication importers, feed readers and mail clients
+copy `<img>` and drop SVG, and the figures carry information the prose
+deliberately does not repeat, so a dropped figure is a hole in the argument
+rather than a missing decoration. The PNG has the site background baked in
+because the palette is dark only, and a transparent raster would put near white
+labels on a white page.
+
+PNG bytes are not reproducible across machines: they depend on the font stack of
+the machine that rendered them. The SVG stays the reviewable, reproducible
+artefact, and a PNG is therefore rendered only when it is missing, never
+re-rendered in place. Rendering needs a Chrome or Chromium on the machine, found
+automatically or through `CHROME_PATH`.
 
 House rules the build cannot check: a diagram is planned in the outline rather
 than added at the end, carries information that is not in the prose, states its

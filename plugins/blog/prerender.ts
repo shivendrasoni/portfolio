@@ -116,7 +116,11 @@ function staticPostIndex(posts: BlogPost[], currentSlug: string): string {
 
 export function renderPostPage(shell: string, post: BlogPost, all: BlogPost[] = []): string {
   const head = buildHead({
-    title: `${post.title} | ${BLOG_TITLE}`,
+    // Bare title, no site suffix. Anything that republishes a post reads
+    // <title> verbatim, so a suffix here becomes part of the headline on the
+    // other platform. og:site_name already carries the site name, and the
+    // index page below keeps the suffix because it has no headline of its own.
+    title: post.title,
     description: post.description,
     canonical: post.canonical,
     type: 'article',
@@ -127,16 +131,22 @@ export function renderPostPage(shell: string, post: BlogPost, all: BlogPost[] = 
     jsonLd: articleJsonLd(post),
   });
 
+  // The article is the only thing inside <main>, and the list of other posts
+  // sits outside it in a <footer>. Readers that extract "the content" of a page
+  // pick the densest container: with the index inside <main> a republished copy
+  // can end up with sixteen unrelated titles appended to the argument.
   const body = [
     '<main class="blog-static">',
-    '<article>',
+    '<article class="blog-static-article">',
     `<h1>${escapeHtml(post.title)}</h1>`,
     `<p>${escapeHtml(post.description)}</p>`,
-    `<p><time datetime="${post.date}">${post.date}</time> | ${post.readingMinutes} min read</p>`,
+    // Date only. Reading time is shown by the site itself, and a republished
+    // copy usually computes and shows its own, so carrying ours produces two.
+    `<p><time datetime="${post.date}">${post.date}</time></p>`,
     `<div class="blog-prose">${post.html}</div>`,
     '</article>',
-    staticPostIndex(all, post.slug),
     '</main>',
+    `<footer class="blog-static-footer">${staticPostIndex(all, post.slug)}</footer>`,
   ].join('');
 
   return compose(shell, head, body);
