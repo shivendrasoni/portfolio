@@ -1,0 +1,44 @@
+name: b11 assemble (temporary)
+
+on:
+  push:
+    branches: [blog/b11-semantic-cache-equality-check]
+    paths: [.github/workflows/b11.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: blog/b11-semantic-cache-equality-check
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Assemble the post
+        run: |
+          cat .ci/m0.txt .ci/m1.txt .ci/m2.txt .ci/m3.txt > content/blog/semantic-cache-missing-equality-check.md
+          sha256sum content/blog/semantic-cache-missing-equality-check.md
+          echo "a49ef814db153cc28da09739877c646a0e0c163d30dbe1b926f641161b689fc9  content/blog/semantic-cache-missing-equality-check.md" | sha256sum -c -
+          wc -c content/blog/semantic-cache-missing-equality-check.md
+
+      - name: Render the figures
+        run: |
+          node --version
+          node scripts/render-diagrams.mjs
+          node scripts/render-diagrams.mjs --check
+
+      - name: Commit and push
+        run: |
+          rm -rf .ci .github/workflows/b11.yml
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add -A
+          git status --short
+          git commit -m "content: a semantic cache is a hash table that skipped the equality check" -m "B11. One post, two rendered figures. It argues that embedding plus nearest neighbour search is the hash step of a hash table lookup and that the key comparison was never implemented, and describes the optional judge added in vector-cache pull request 6." -m "Assembled on a runner because the authoring machine has no git binary. The temporary workflow and its staged payload are removed in this commit."
+          git push origin HEAD:blog/b11-semantic-cache-equality-check
