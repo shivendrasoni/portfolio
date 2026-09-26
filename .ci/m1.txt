@@ -1,0 +1,35 @@
+    direction TB
+    Q["Query"] --> E["Embed the query"]
+    E --> A["Nearest neighbour<br/>shortlist, top k"]
+    A --> T{"Cosine above<br/>threshold?"}
+    T -->|"Yes"| V2["Return the<br/>cached answer"]
+    T -->|"No"| M2["Miss, call<br/>the model"]
+    V2 -.-> X["No comparison exists here.<br/>Nothing asks whether the two<br/>questions share an answer"]
+  end
+```
+
+## The check was never impossible, it was priced wrong
+
+Here is the part I want to be precise about, because it is the difference between a 2024 argument and a 2026 one.
+
+The equality check was always available in principle. Take the incoming query and the candidate entry, and ask a model whether the cached answer actually answers this question. That is a real check and it works. It also costs a model call on the read path, with tokens to pay for, prose to parse on the way back, and a latency in the same order of magnitude as the call you were trying to avoid. Spending a generation to decide whether to skip a generation is not a cache.
+
+So the check did not get skipped because nobody thought of it. It got skipped because the only instrument for producing a verdict was built to produce paragraphs, and the price of a paragraph was the entire budget.
+
+What changed this month is narrower than the reaction to it suggests. Decision only models, which TypeSafe calls [System One](https://docs.typesafe.ai/introduction), do not generate text at all. You send a state and a set of typed questions, and you get back typed answers with calibrated probabilities, every question evaluated in parallel against the same state in one request. Jev, the first of them, went into early access on 15 September 2026. TypeSafe's own model page lists it at [$0.042 per million input tokens with output free](https://docs.typesafe.ai/models), and quotes a response time in the low hundreds of milliseconds, which my own pull request marks as not independently verified, because I have not measured it and neither has anyone I would cite.
+
+Generation did not get cheaper. A verdict did. That is a smaller claim than the launch coverage made, and a more useful one, because it turns a missing equality check from a constraint into a choice.
+
+## What the check looks like once you write it down
+
+I have [opened a pull request on vector-cache](https://github.com/shivendrasoni/vector-cache/pull/6) adding an optional judge in front of every hit. It is open rather than merged, and it is a library rather than anything running in production, so read it as a design and not as a result. With no judge configured, nothing changes.
+
+```python
+vector_cache = VectorCache(
+    embedding_model=my_embedding_model,
+    db=my_cache_storage,
+    vector_store=my_vector_store,
+    judge=JevJudge(mode="query", accept=0.9),
+    judge_band=(0.80, 0.95),  # below: miss. above: direct hit. between: judged
+    judge_top_k=3,            # candidates sent in one request
+    check_cacheable=True,     # refuse to store time sensitive, personal or failed responses
