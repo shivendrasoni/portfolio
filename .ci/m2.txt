@@ -1,0 +1,35 @@
+)
+```
+
+The part that matters is not which model sits behind `JevJudge`. It is where each decision is taken.
+
+```mermaid The lookup path once a judge is set, with the two decisions taken without a model at all. The judge sees at most the top three candidates and costs one request for all of them, and every error edge leads to a miss, so an outage costs hit rate and never correctness.
+flowchart TD
+  Q["Query, nearest neighbour<br/>shortlist of 3"] --> F{"Similarity<br/>below 0.80?"}
+  F -->|"Yes"| MISS["Miss: call the model"]
+  F -->|"No"| N{"Same numbers in both queries?<br/>compared in plain code"}
+  N -->|"No"| MISS
+  N -->|"Yes"| C{"Similarity 0.95 or above,<br/>and no negation on one side only?"}
+  C -->|"Yes"| HIT["Serve the cached answer,<br/>no judge call"]
+  C -->|"No"| J["Judge, one request:<br/>a match question and a separate<br/>negation question per candidate"]
+  J -->|"Match at or above 0.9"| HIT
+  J -->|"Below 0.5"| MISS
+  J -->|"In between: uncertain"| LOG["Miss, logged for calibration"]
+  J -->|"Error or timeout"| MISS
+```
+
+Four things in there are worth arguing about, and each is a place where the call could reasonably have gone the other way.
+
+### The numbers are compared in code, and that is not a shortcut
+
+`numbers_match` pulls the numerals out of both queries, normalises them so that 1,000 and 1000 agree, and drops the candidate when the sets differ. No judge call, no model, no probability. A regular expression and a set comparison.
+
+That looks like a strange thing to put in front of a model you are paying for, until you read TypeSafe's own [jaggedness page for jev-1.13](https://docs.typesafe.ai/model-jaggedness/jev-1.13), which says plainly that the model struggles with numeric precision and with date comparison, and advises keeping arithmetic in code. So both fuzzy components here, the embedding and the decision model, are weak in the same place, and that place carries the entire content of "under $300" against "under $500". Where both of them are weak and the predicate is exactly decidable, the predicate belongs in code. It is also the cheapest step in the path, which is why it runs first.
+
+The opposite case, and it is real. The guard is naive on purpose: it does not understand "two" or "a couple", and a cached query mentioning a version number will refuse to match one that does not. That costs hits silently, in a way that never appears as an error. On a corpus where quantities are written as words I would normalise number words first, or drop the guard and let the judge see the pair. What I would not do is route the numeric decision through the model because the model is the smarter component, because on this question it is not.
+
+The negation guard is built the other way round on purpose. When the negation counts differ, the candidate is not rejected, it is sent to the judge, because a word list cannot tell "gluten free" from "without gluten". A false alarm there costs one request, and forcing a miss instead would cost a legitimate hit. The guard that can be certain rejects. The guard that can only be suspicious escalates.
+
+### It fails closed, and the cost of that is a thundering herd
+
+Every error path in the judge returns no match. Timeout, rate limit, malformed response, provider outage: all of them become a cache miss, and the cacheability check behaves the same way, so a failure there leaves the response unstored rather than stored unchecked.
