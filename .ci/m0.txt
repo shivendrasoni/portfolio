@@ -1,0 +1,35 @@
+---
+title: A semantic cache is a hash table that skipped the equality check
+slug: semantic-cache-missing-equality-check
+date: 2026-09-27
+description: A dictionary hashes the key and then compares the full key before it returns anything. A semantic cache does the first half and calls it a lookup. The comparison was always missing, and until this month the only way to add it cost more than the cache saved.
+tags:
+  - applied-ai
+  - caching
+  - system-design
+draft: false
+---
+
+A dictionary lookup does two things. It hashes the key to find a bucket, and then it compares the full key against whatever is sitting in that bucket. The hash narrows the search. The comparison is the part that makes the answer correct. Take the second step out and you still have something that returns a value quickly, and it no longer has any idea whether that value belongs to the key you asked about.
+
+That is a semantic cache. Embedding the query is the hash. The nearest neighbour search is the bucket. There is no comparison step. I wrote one of these two years ago, [vector-cache](https://github.com/shivendrasoni/vector-cache), put it out under MIT, and then left it where it was, because the missing half was not subtle and the only instrument I had to fill it was a second model call, which is precisely the cost the cache exists to remove.
+
+## The failure this produces, stated once
+
+I have already written the failure mode up at length in [semantic caching, and the day it serves the wrong answer](/blog/semantic-caching-wrong-answer), so here it is in two paragraphs and then I will move on.
+
+Cosine similarity between two embedded questions measures whether they look alike as text. What you need before serving a cached answer is whether they have the same answer. Those correlate, which is why the technique works, and they come apart hardest at pairs differing by one negation or one number. "Chocolate cake without gluten" and "chocolate cake with gluten" sit close enough in most embedding spaces to clear any threshold you would actually ship. So do "best laptops under $300" and "best laptops under $500". High similarity and opposite meaning arrive together, which is the worst distribution a failure can have.
+
+And the failure does not look like a failure. A wrong hit returns 200, returns fast, returns cheap, and increments the hit rate, so any control loop wired to that metric, including the adaptive threshold I shipped in that library, is rewarded for producing more of them. Tuning the threshold moves you along a line between missing real hits and serving wrong ones. It never adds the step that is not there.
+
+```mermaid Both lookups narrow the search the same way. Only the left one verifies before it returns, and the dotted box is the step no semantic cache implements, including the one I wrote in 2024. A hash collision in a dictionary is caught by the comparison; a near neighbour in a semantic cache is served.
+flowchart TB
+  subgraph HT["Hash table lookup"]
+    direction TB
+    K["Key"] --> H["Hash the key"]
+    H --> B["Bucket,<br/>a few entries"]
+    B --> C{"Full key<br/>equal?"}
+    C -->|"Yes"| V["Return<br/>the value"]
+    C -->|"No"| M1["Miss, or<br/>probe on"]
+  end
+  subgraph SC["Semantic cache lookup"]
