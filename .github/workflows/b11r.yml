@@ -1,0 +1,42 @@
+name: b11 rewrite assemble (temporary)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: blog/b11-rewrite-plain-register
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Decode the post
+        run: |
+          cat .ci/p00 .ci/p01 .ci/p02 | tr -d "\n" > /tmp/post.b64
+          base64 -d /tmp/post.b64 | gunzip > content/blog/semantic-cache-missing-equality-check.md
+          echo "8cd6fa66a051b6ae8fe25b4d0b90c2d5f8d7c195f7af61150408784ce1b097ac  content/blog/semantic-cache-missing-equality-check.md" | sha256sum -c -
+          wc -c content/blog/semantic-cache-missing-equality-check.md
+
+      - name: Render the figures
+        run: |
+          node scripts/render-diagrams.mjs
+          node scripts/render-diagrams.mjs --check
+          ls -l content/blog/diagrams/adae5aeda183.svg content/blog/diagrams/adae5aeda183.png content/blog/diagrams/6e209821236e.svg content/blog/diagrams/6e209821236e.png
+
+      - name: Commit and push
+        run: |
+          rm -rf .ci .github/workflows/b11r.yml
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add -A
+          git status --short
+          git commit -m "content: rewrite the semantic cache post in a plain register" -m "Same slug, same date. New title and an opening that explains what a semantic cache is before it makes any claim, then the first person receipt, the negation failure in plain words, and the judge added in vector-cache pull request 6. The hash table framing is gone from the title, the opening and the closing claim, on Shivendra's instruction. Two figures re-rendered and the two figures of the previous version deleted." -m "Assembled on a runner because the authoring machine has no git binary. The temporary workflow and its staged payload are removed in this commit."
+          git push origin HEAD:blog/b11-rewrite-plain-register
