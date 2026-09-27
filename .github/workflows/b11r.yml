@@ -1,7 +1,9 @@
 name: b11 rewrite assemble (temporary)
 
 on:
-  workflow_dispatch:
+  push:
+    branches: [blog/b11-rewrite-plain-register]
+    paths: ['.ci/trigger']
 
 permissions:
   contents: write
