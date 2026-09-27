@@ -1,8 +1,24 @@
 {
   "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/blog/semantic-cache-missing-equality-check",
+      "destination": "/blog/decision-models-as-a-judge-for-a-semantic-cache",
+      "permanent": true
+    }
+  ],
   "rewrites": [
-    { "source": "/blog", "destination": "/blog.html" },
-    { "source": "/blog/:slug", "destination": "/blog/:slug.html" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    {
+      "source": "/blog",
+      "destination": "/blog.html"
+    },
+    {
+      "source": "/blog/:slug",
+      "destination": "/blog/:slug.html"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
   ]
 }

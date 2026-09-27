@@ -1,8 +1,8 @@
 ---
-title: Everyone tried a semantic cache and quietly switched it off
-slug: semantic-cache-missing-equality-check
+title: Decision models as a judge for a semantic cache
+slug: decision-models-as-a-judge-for-a-semantic-cache
 date: 2026-09-27
-description: A semantic cache decides that two questions mean the same thing by how they look, which is fine until one word flips the meaning. I published one of these two years ago and then shelved it, because the only fix cost more than the cache saved. That stopped being true this month.
+description: A semantic cache decides that two questions mean the same thing by how they look, and the pairs it gets most confidently wrong differ by one negation or one number. The missing step was always to verify the hit before serving it, and the only instrument for that verdict used to cost a whole generation. A decision model changes that price and nothing else.
 tags:
   - applied-ai
   - caching
