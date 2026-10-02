@@ -2,7 +2,7 @@
 title: The hard problem in agent memory is forgetting
 slug: agent-memory-forgetting
 date: 2026-10-02
-description: Remembering is a library call. Deciding what a system should stop believing, and when, is the part nobody designs. A fact can stop being true in four different ways and each one needs a different mechanism, all of them on the write path, because the read path has none of the context needed to decide.
+description: Remembering is four lines of code and a vector store. Deciding what a system should stop believing, and when, has no library, no API call and no default. That decision can only be made on the write path, and almost nobody makes it.
 tags:
   - applied-ai
   - agents
@@ -10,29 +10,28 @@ tags:
 draft: false
 ---
 
-A user tells your assistant in March that the team has moved off its billing provider. In May they ask about invoices and the assistant answers confidently, in detail, about the provider they left. The user corrects it. It apologises. Next session it is back to the old provider again.
+Memory is the feature every agent framework shipped this year, and in most of them it is four lines. Embed the turn. Write a row. Search on the next turn. Paste the top hits into the prompt. That code demos beautifully and it rots by about week six, and when it rots it is not retrieval that broke.
 
-Read that again and notice what did not fail. Storage worked. The embedding worked. Retrieval found the most relevant thing in the store and handed it over. Every component did its job. The system was not bad at remembering, it was perfect at remembering, and that is exactly what was wrong with it. Nothing in it was ever going to decide that a fact it had been told was now dead.
+In March a user tells your assistant the team has moved off its billing provider. In May they ask about an invoice and get a confident, detailed answer about the provider they left. They correct it. It apologises. Next session, same wrong answer.
 
-This is the part that gets skipped. Remembering, in 2026, is close to a library call: pick a store, embed, search, paste the hits into the prompt. Forgetting has no library. There is no `forget()` in anyone's memory API that means what you actually need it to mean, which is "this was true, something happened, and it must stop influencing answers from now on." So people build the half that has an SDK and ship the other half as an open question, and the open question is the one users notice.
+Nothing in that system failed. The write succeeded, the index searched, the ranker ranked, and the dead fact really was the most similar text in the store. The system was not bad at remembering. It was perfect at remembering, which is the whole problem. Remembering is a dependency you install. Forgetting is the part you have to design, and it is where the engineering is.
 
-One line on a neighbour and then I will leave it alone: my post on [when retrieval is the wrong tool](/blog/rag-when-retrieval-is-wrong) is about fetching documents you did not write and do not control. This is the opposite situation. These are facts your own system chose to keep, about one person, which means you own the write and every property of that fact, including how long it gets to live, is a decision somebody made or avoided making.
+## `forget()` does not mean what you need it to mean
 
-## A fact can stop being true in four different ways
+Every memory SDK has a delete. None of them has the operation the product actually needs, which is: this was true, something happened, it must stop influencing answers from now on, and so must everything derived from it.
 
-This is the distinction that the word "forgetting" hides, and it is the reason a single eviction policy never works. Four different things get called forgetting and each needs its own mechanism.
+Four unrelated things get called forgetting, and they share nothing except the word.
 
-A fact can be **superseded**. The user moved, changed jobs, switched providers. There is a new fact and it contradicts the old one. The trigger is another fact arriving.
+| | What happened | What fires it |
+|---|---|---|
+| **Superseded** | They switched providers, moved city, changed teams | Another fact arriving |
+| **Expired** | Nothing contradicted it, it just aged out | A clock, and the rate differs per fact by orders of magnitude |
+| **Out of scope** | It was never about the person, it was about one task | The task ending |
+| **Withdrawn** | They asked you to delete it, or [Article 17](https://gdpr-info.eu/art-17-gdpr/) did on their behalf | Something outside your system, and you do not get to argue |
 
-It can **expire**. Nothing contradicted it, it simply aged out. "I am debugging a deploy right now" was true for an hour. "She is on the growth team" was true for about a year. The trigger is time, and the clock rate is wildly different per fact.
+"I am debugging a deploy right now" has a shelf life of an hour. "She is on the growth team" has about a year. "Prefers metric units" has no expiry at all. One eviction policy cannot serve those three, and a store that implements only the supersede path, which is the common case, keeps serving the other three with full confidence.
 
-It can be **scoped out**. It was never a fact about the person, it was a fact about one task, and the task ended. Most of what a per turn summariser writes is this: context that was load bearing for twenty minutes and is noise forever afterwards. The trigger is the end of the episode it belonged to.
-
-It can be **withdrawn**. The user asks you to delete it, or a regulator does on their behalf. The [right to erasure](https://gdpr-info.eu/art-17-gdpr/) is not a ranking problem, it is a hard requirement with no "mostly" in it. The trigger is external and you do not get to argue with it.
-
-A system that only implements one of these is not a memory system with a gap, it is a memory system that is confidently wrong in three different ways and only looks broken in one.
-
-```mermaid Four ways a fact stops being true, the trigger that fires each one, and the only moment at which each can be decided cheaply. The right hand column is the point of the diagram: three of the four triggers arrive long after the write, which is precisely why the metadata they need has to be attached at the write. A system that implements only the supersede path, which is the common case, will still be serving expired and out of scope facts with full confidence.
+```mermaid Four ways a fact stops being true, the trigger for each, and what each trigger needs to have been recorded earlier. The right hand column is the point: three of the four fire long after the write, at a moment when the information needed to act on them is already gone.
 flowchart LR
   F["A stored fact"] --> S["SUPERSEDED<br/>a newer fact<br/>contradicts it"]
   F --> E["EXPIRED<br/>nothing contradicted it,<br/>it simply aged out"]
@@ -48,41 +47,47 @@ flowchart LR
   X2 --> W
 ```
 
-## Only the write knows enough to set the clock
+## The clock can only be set at the write
 
-Here is the structural reason this ends up on the write path rather than somewhere more convenient.
+At the moment a fact is written you have the turn in front of you. You can see whether the user stated a preference or thought out loud, whether a decision closed, whether this is about the person or about the ticket they are working today. By the time anything is read, weeks later, in another session, all of that is gone. The read path sees a row and a similarity score and is being asked to reconstruct context that was thrown away.
 
-At the moment a fact is written you have the turn in front of you. You can see whether the user stated a preference or thought out loud, whether a decision closed or stayed open, whether this is about the person or about the ticket they happen to be working. By the time anything is read, weeks later, in a different session, all of that is gone. The read path sees a row and a similarity score. Asking it to work out whether a fact has aged badly is asking it to reconstruct context that was thrown away at the write.
+Which means a memory write is not one field. It is closer to this:
 
-**My judgement: every fact gets a shelf life at write time, and the default is short rather than infinite.** Not because short is better, but because the default is the only one you will set honestly. If the default is infinite, nobody revisits it, and a store accumulates confident claims about a person's life that nobody has checked in a year. A short default forces the exception to be argued for, which means the long lived facts are the ones somebody actually thought about.
+```python
+store.write(
+    fact="Billing runs through Acme Pay",
+    subject="user:4471",
+    scope="person",                       # person, or task:8812
+    valid_from=now,
+    ttl=days(365),                        # short by default, long is an argued exception
+    supersedes=contradictions(subject="user:4471", about="billing"),
+    source_turn="conv:9f21#turn:14",
+)
+```
 
-**The opposite call, and it is a real one.** If you are in a setting where the record itself is the product, or where you can be asked later what the system believed at a particular moment, never expire anything. Append with validity intervals and resolve at read time. You pay for it on every read forever, and you buy the ability to reconstruct a past state, which in a dispute is worth more than a cheap read.
+Four of those seven arguments exist for no reason other than to let the fact die cleanly later. None of them can be filled in afterwards.
 
-The same logic puts ownership on the write. Scope every fact to a tenant and a person at the moment it is stored, so no read can reach across, and so a withdrawal request has one identifier to follow. Isolation enforced at read time is a filter that somebody eventually forgets in one code path.
+Make the default shelf life short. Not because short is better, but because an infinite default is the one nobody ever revisits, and a year later the store is full of confident claims about a person's life that no one has checked. A short default forces the long lived facts to be argued for, which is the only way you find out which ones they are. If your product is the record itself, a case file, an audit trail, anything where you can be asked later what the system believed on a given Tuesday, do the reverse: expire nothing, append with validity intervals, resolve at read. That costs you on every read forever and buys the ability to reconstruct a past state, which in a dispute is worth more than a cheap read.
 
-## Writing less is the cheapest forgetting there is
+Scope goes on at the write too. A fact carries a tenant and a person from the moment it is stored, so no read can reach across and a withdrawal request has exactly one identifier to follow. Isolation applied at read time is a filter, and a filter is something one code path eventually forgets.
 
-The strongest forgetting mechanism available to you is not deleting things. It is not writing them.
+## Writing less is the cheapest forgetting available
 
-A per turn summariser writes a near duplicate of the same handful of facts in slightly different words, every turn, forever. Within a few hundred turns the store holds dozens of fuzzy restatements, none of them wrong, all of them competing. Now the ranking problem you have is one you manufactured, and the forgetting problem is harder than it needed to be because there is no single row to supersede.
+The strongest forgetting mechanism is not deletion. It is not writing the thing.
 
-**My judgement: write on an explicit signal, not on every turn.** A preference stated, a decision closed, an identifier appearing, a tool call that succeeded with an argument the user supplied. The volume drops by an order of magnitude and every subsequent operation, ranking, correction, expiry, deletion, gets easier because there is less to reason about.
+A per turn summariser writes a near duplicate of the same handful of facts, in slightly different words, every turn, forever. A few hundred turns in, the store holds dozens of fuzzy restatements, none of them wrong, all of them competing, and no single row to supersede. That ranking problem was manufactured by your own write policy.
 
-**The opposite call.** In long running support or sales, where a session spans days and the user never restates anything, a missed fact means a human picking up the thread from nothing. There, write every turn and pay the compaction cost. This is a judgement about which of the two mistakes hurts you more in your setting, not a best practice.
+Write on a signal instead: a preference stated, a decision closed, an identifier given, a tool call that succeeded with an argument the user supplied. Volume drops by an order of magnitude and every operation downstream gets easier, because there is less to rank, less to correct and less to destroy. The exception is long running support and sales, where a session spans days and nobody restates anything; there a missed fact means a human starting from zero, so write every turn and pay the compaction cost. That is a judgement about which of two mistakes hurts more in your setting, not a best practice.
 
-There is a second reason to write less, and it is the one that bites later. Every fact you store is a fact you may one day have to find and destroy. Provenance is cheap to attach at the write and almost impossible to reconstruct afterwards.
+## The delete returns success and the fact is still there
 
-## A deleted fact has copies, and the copies are the bug
+This is the failure that stays invisible longest, because the API call comes back fine.
 
-This is where most memory designs quietly fail, and it fails invisibly because the delete call returns success.
+You delete the row. The raw transcript still contains the sentence. The rolling summary written last month has it baked into a paragraph with no pointer back to the source. The prompt cache has it. Analytics copied it. And if any of that was swept into a fine tuning set, it is in weights, where there is no delete at all. The user asked you to forget one thing and you forgot it in one of six places.
 
-You remove the row from the memory store. Meanwhile the original transcript still has the sentence. The rolling conversation summary, generated a month ago, has the fact baked into a paragraph with no pointer back to the source. The prompt cache has it. Your analytics pipeline copied it. If any of that got into a fine tuning set, it is now in weights and there is nothing to delete at all. The user asked you to forget something and you forgot it in one of six places.
+A fact is only forgettable if, at write time, you recorded where it came from and every derived copy carries that identifier. Forgetting is a graph operation. The graph has to be built on the way in, because nobody is reconstructing it from a transcript in six months.
 
-**My judgement: a fact is only forgettable if, at write time, you recorded where it came from and every derived copy carries that identifier.** Forgetting is a graph operation, not a row operation, and the graph has to be built on the way in.
-
-**The opposite call.** If your retention story is genuinely simple, a single store, no derived summaries, nothing exported, then all of this is overhead and you should not pay it. Be honest about which one you are. Most teams believe they are the simple case because nobody has drawn the copies.
-
-```mermaid One fact and the six places it ends up, with the single delete that most systems implement marked against the five copies it does not reach. The dashed path is the one that cannot be undone at all: anything that reached a training set is in weights, and no delete exists for it, which is the argument for never training on stored user memory in the first place.
+```mermaid One fact and the six places it ends up, with the single delete most systems implement shown against the five copies it never reaches. The dashed path is the one with no remedy: anything that reached a training set is in weights, which is the argument for never training on stored user memory.
 flowchart TB
   U["User states a fact"] --> T["Raw transcript"]
   U --> M["Memory store row"]
@@ -97,9 +102,11 @@ flowchart TB
   FT --> Z["In weights.<br/>No delete exists.<br/>Do not train<br/>on user memory"]
 ```
 
+If your retention story is genuinely simple, one store, no derived summaries, nothing exported, none of this applies and you should not pay for it. Most teams believe they are that case because nobody has drawn the picture above for their own system.
+
 ## Seven questions that decide when a fact dies
 
-The policy, compressed. If a write cannot answer these, it should not happen.
+The whole policy, compressed. A write that cannot answer these should not happen.
 
 1. When does this stop being true?
 2. What does it contradict today?
@@ -109,8 +116,6 @@ The policy, compressed. If a write cannot answer these, it should not happen.
 6. Where will copies of it land?
 7. Would it earn a slot next turn?
 
-Question three is the one that quietly decides the size of your store. Question six is the one that decides whether you can honour a deletion request at all.
+Three decides the size of your store. Six decides whether you can honour a deletion request at all. Seven is the one people skip, and it is the real constraint: the budget is not disk, it is the few hundred tokens a fact has to compete for on the next turn.
 
-## What this comes down to
-
-Memory is the most requested agent feature and the least designed one, and most of what is written about it is a tour of a vendor's API with store and search as the only verbs. Those two are the easy half. The decisions that make a system trustworthy over months are all decisions about ending things: what expires, what gets superseded, what belonged to a task that is over, what has to be destroyed and proven destroyed. None of those can be bolted on at read time, because by then the context that would have let you decide is gone. Build the forgetting first and the remembering is mostly a database.
+Memory is the most requested agent feature and the least designed one. Store and search are the easy half and they already have vendors. What makes a system trustworthy after six months is all the other half: what expires, what gets overwritten, what belonged to a task that is over, what has to be destroyed and proven destroyed. Build that first and the remembering is mostly a database.
