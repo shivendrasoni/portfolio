@@ -1,7 +1,7 @@
 ---
 title: Agent memory is a write path problem, not a read path problem
 slug: agent-memory-write-path
-date: 2026-10-05
+date: 2026-10-02
 description: Most memory bugs look like retrieval failures and are decided much earlier, at the moment a turn is summarised and stored. Memory is not additive, correction is the operation most designs never implement, and the binding constraint is the context budget at the start of the next turn rather than the size of the store.
 tags:
   - applied-ai
